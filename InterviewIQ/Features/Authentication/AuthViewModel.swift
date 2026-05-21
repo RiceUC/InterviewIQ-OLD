@@ -1,7 +1,7 @@
 // Location: InterviewApp/Features/Authentication/AuthViewModel.swift
 
 import Foundation
-
+import Combine
 @MainActor
 class AuthViewModel: ObservableObject {
     // MARK: - Properties
