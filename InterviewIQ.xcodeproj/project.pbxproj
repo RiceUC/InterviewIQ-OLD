@@ -65,6 +65,9 @@
 			);
 			name = InterviewIQ;
 			packageProductDependencies = (
+				E221FD825F4942D9B65025C9 /* FirebaseCore */,
+				5A96F12E45704800950FC41E /* FirebaseFirestore */,
+				34C23610DE4347B98E9A6E3C /* FirebaseAuth */,
 			);
 			productName = InterviewIQ;
 			productReference = 6E5D9CF42FA85D3D0019B5C8 /* InterviewIQ.app */;
@@ -333,6 +336,24 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E221FD825F4942D9B65025C9 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F62E93E2FC859580011DA24 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		5A96F12E45704800950FC41E /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F62E93E2FC859580011DA24 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		34C23610DE4347B98E9A6E3C /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1F62E93E2FC859580011DA24 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		1F62E93E2FC859580011DA24 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
