@@ -60,7 +60,7 @@ struct QuestionScoringView: View {
                     Text("\(score) / \(question.maxScore)")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 } else {
                     Text("Not scored")
                         .font(.subheadline)

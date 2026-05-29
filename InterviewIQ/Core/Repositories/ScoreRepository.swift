@@ -37,7 +37,10 @@ final class ScoreRepository {
             .document(record.sessionId)
             .collection("scoreRecords")
             .document(record.candidateId)
-        try await ref.setData(from: record)
+        // Firestore's Codable setData(from:) is synchronous; encode to [String:Any]
+        // first so we can use the proper async setData overload.
+        let data = try Firestore.Encoder().encode(record)
+        try await ref.setData(data)
     }
 
     func markAsImmutable(candidateId: String, sessionId: String) async throws {
