@@ -125,7 +125,7 @@ struct InterviewRatingView: View {
                 value: Double(viewModel.answeredCount),
                 total: Double(max(viewModel.questions.count, 1))
             )
-            .tint(viewModel.allAnswered ? .green : .accentColor)
+            .tint(viewModel.allAnswered ? .green : Color.accentColor)
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
@@ -176,7 +176,7 @@ struct InterviewRatingView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(viewModel.allAnswered ? .green : .accentColor)
+                .tint(viewModel.allAnswered ? .green : Color.accentColor)
                 .disabled(!viewModel.allAnswered || viewModel.isSubmitting)
             } else {
                 Button {

@@ -91,7 +91,7 @@ private struct CandidateRowView: View {
                 .overlay {
                     Text(candidate.name.prefix(1).uppercased())
                         .font(.headline)
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 }
 
             VStack(alignment: .leading, spacing: 3) {
