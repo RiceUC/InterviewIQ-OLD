@@ -1,14 +1,45 @@
 import SwiftUI
+import FirebaseAuth
 
-// Dev entry point on this branch.
-// TODO (merge): replace with Cello's auth flow, which routes to the correct screen per role.
+@Observable
+private final class AppAuthState {
+    var isLoggedIn: Bool
+    var currentUserId: String
+
+    private var listenerHandle: AuthStateDidChangeListenerHandle?
+
+    init() {
+        let currentUser = Auth.auth().currentUser
+        isLoggedIn = currentUser != nil
+        currentUserId = currentUser?.uid ?? ""
+
+        listenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            DispatchQueue.main.async {
+                self?.isLoggedIn = user != nil
+                self?.currentUserId = user?.uid ?? ""
+            }
+        }
+    }
+
+    deinit {
+        if let handle = listenerHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
+        }
+    }
+}
+
 struct ContentView: View {
-    // Mocked until Cello's auth branch is merged.
-    private let mockAdminId = "dev-admin-001"
+    @State private var authState = AppAuthState()
 
     var body: some View {
-        SessionDashboardView(
-            viewModel: SessionDashboardViewModel(adminId: mockAdminId)
-        )
+        if authState.isLoggedIn {
+            SessionDashboardView(
+                viewModel: SessionDashboardViewModel(adminId: authState.currentUserId)
+            )
+        } else {
+            NavigationView {
+                LoginView()
+            }
+        }
     }
 }
