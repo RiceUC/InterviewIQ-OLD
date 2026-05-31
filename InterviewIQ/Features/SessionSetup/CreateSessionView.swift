@@ -60,7 +60,7 @@ struct SessionDashboardView: View {
                 }
             } message: {
                 if let title = viewModel.sessionToDelete?.title {
-                    Text(""\(title)" will be permanently removed.")
+                    Text("\"\(title)\" will be permanently removed.")
                 }
             }
             .alert("Error", isPresented: $viewModel.showError) {

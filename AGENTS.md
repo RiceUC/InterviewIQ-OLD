@@ -42,3 +42,5 @@ After interviews are completed, administrators can review objective, mathematica
 All repositories strictly follow the offline-first mandate by interacting with two infrastructure controllers:
 1.  **`LocalPersistenceController`:** Acts as the primary CoreData/SwiftData interface (`saveContext()`, `fetch()`, `delete()`) ensuring the app works flawlessly without an internet connection.
 2.  **`NetworkAPIClient`:** Acts as the gateway to the cloud backend, handling standard REST HTTP methods (`get()`, `post()`, `put()`, `delete()`) when syncing data.
+
+@CLAUDE.md
