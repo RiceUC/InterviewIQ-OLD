@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // Stable identity wrapper so ForEach doesn't lose focus when two names are equal.
 struct CandidateEntry: Identifiable {
