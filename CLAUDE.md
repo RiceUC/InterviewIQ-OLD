@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**InterviewIQ** is a native iOS app for structured interview scoring and evaluation. Built with SwiftUI + Firebase (Firestore + Auth), targeting **iOS 26.0**, Swift 5.0. The app is offline-first: scores are persisted locally before any network write.
+**InterviewIQ** is a native iOS app for structured interview scoring and evaluation. Built with SwiftUI + Firebase (Realtime Database + Auth), targeting **iOS 26.0**, Swift 5.0. The app is offline-first: scores are persisted locally before any network write.
 
 ---
 
@@ -41,10 +41,10 @@ Firebase SDK is integrated via Swift Package Manager (SPM). Open `InterviewIQ.xc
 
 ## Architecture
 
-The app enforces a strict **Multitier + MVVM** separation. Never let Views call repositories or Firestore directly — always go through the service layer.
+The app enforces a strict **Multitier + MVVM** separation. Never let Views call repositories or the Realtime Database directly — always go through the service layer.
 
 ```
-View  →  ViewModel  →  Service  →  Repository  →  Firestore / UserDefaults
+View  →  ViewModel  →  Service  →  Repository  →  Realtime Database / UserDefaults
 ```
 
 ### Tiers
@@ -52,14 +52,14 @@ View  →  ViewModel  →  Service  →  Repository  →  Firestore / UserDefaul
 | Tier | Location | Role |
 |---|---|---|
 | **Models** | `Core/Models/` | Plain Swift structs, `Codable`, no business logic |
-| **Repositories** | `Core/Repositories/` | Raw read/write to Firestore and local storage |
+| **Repositories** | `Core/Repositories/` | Raw read/write to Realtime Database and local storage |
 | **Services** | `Core/Services/` | Business rules, validation, orchestration |
 | **ViewModels** | `Features/**/` | `@Observable` classes; own all UI state and async calls |
 | **Views** | `Features/**/` | SwiftUI views; receive a ViewModel, trigger actions |
 
-### Firestore document paths
+### Realtime Database node paths
 
-| Collection | Path |
+| Node | Path |
 |---|---|
 | Sessions | `sessions/{sessionId}` |
 | Candidates | `sessions/{sessionId}/candidates/{candidateId}` |
@@ -67,21 +67,95 @@ View  →  ViewModel  →  Service  →  Repository  →  Firestore / UserDefaul
 | Score records | `sessions/{sessionId}/scoreRecords/{candidateId}` |
 | Candidate locks | `sessions/{sessionId}/candidateLocks/{candidateId}` |
 
+### Realtime Database Schema (Structure B)
+
+```json
+{
+  "users": {
+    "{userId}": {
+      "id": "String",
+      "name": "String",
+      "email": "String",
+      "role": "admin | panelist"
+    }
+  },
+  "sessions": {
+    "{sessionId}": {
+      "id": "String",
+      "title": "String",
+      "date": "Timestamp",
+      "adminId": "String",
+      "interviewerIds": ["String"],
+      "candidates": {
+        "{candidateId}": {
+          "id": "String",
+          "name": "String",
+          "sessionId": "String"
+        }
+      },
+      "rubricQuestions": {
+        "{rubricQuestionId}": {
+          "id": "String",
+          "prompt": "String",
+          "maxScore": "Int",
+          "weight": "Double",
+          "order": "Int",
+          "isRequired": "Bool"
+        }
+      },
+      "scoreRecords": {
+        "{candidateId}": {
+          "id": "String",
+          "candidateId": "String",
+          "interviewerId": "String",
+          "sessionId": "String",
+          "totalScore": "Int (0–100)",
+          "notes": "String",
+          "status": "in_progress | submitted",
+          "syncStatus": "SYNCED | PENDING | FAILED",
+          "isImmutable": "Bool",
+          "submittedAt": "Timestamp?",
+          "lockedAt": "Timestamp?",
+          "questionScores": [
+            {
+              "id": "String",
+              "questionId": "String",
+              "score": "Int (1–maxScore; 0 = unanswered)",
+              "notes": "String"
+            }
+          ]
+        }
+      },
+      "candidateLocks": {
+        "{candidateId}": {
+          "candidateId": "String",
+          "interviewerId": "String",
+          "sessionId": "String",
+          "lockedAt": "Timestamp",
+          "expiresAt": "Timestamp",
+          "isLocked": "Bool"
+        }
+      }
+    }
+  }
+}
+```
+
 ---
 
 ## Key Systems
 
 ### Offline-First Persistence (NFR-07)
 
-`ScoreRepository` always writes to **UserDefaults** first (key: `pending_score_records`), then attempts a Firestore write. `OfflineSyncManager` (`@Observable`) wraps `NWPathMonitor`; when connectivity is restored it flushes all pending `ScoreRecord`s via `syncPending()`. ViewModels call `syncManager.enqueue(_:)` — never write to Firestore directly from a ViewModel.
+`ScoreRepository` always writes to **UserDefaults** first (key: `pending_score_records`), then attempts a Realtime Database write. `OfflineSyncManager` (`@Observable`) wraps `NWPathMonitor`; when connectivity is restored it flushes all pending `ScoreRecord`s via `syncPending()`. ViewModels call `syncManager.enqueue(_:)` — never write to the Realtime Database directly from a ViewModel.
 
 ### 1:1 Candidate Locking (UC-04)
 
-Before a panelist can score a candidate, `InterviewConductorService.lockCandidate()` writes a `CandidateLock` document to Firestore. The lock expires after 2 hours (`lockDuration`). A lock is denied if another interviewer holds a non-expired lock. `releaseLock()` must be called on submit or cancel. Score `0` means unanswered; `QuestionScore.isAnswered` is the canonical check.
+Before a panelist can score a candidate, `InterviewConductorService.lockCandidate()` writes a `CandidateLock` node to the Realtime Database. The lock expires after 2 hours (`lockDuration`). A lock is denied if another interviewer holds a non-expired lock. `releaseLock()` must be called on submit or cancel. Score `0` means unanswered; `QuestionScore.isAnswered` is the canonical check.
 
 ### Score Immutability
 
-`ScoreRecord.isImmutable = true` and `status = "submitted"` are set at submission time. `ScoreRepository.markAsImmutable()` writes this flag to Firestore. Once immutable, a record must never be overwritten.
+`ScoreRecord.isImmutable = true` and `status = "submitted"` are set at submission time. `ScoreRepository.markAsImmutable()` writes this flag to the Realtime Database. Once immutable, a record must never be overwritten.
 
 ### Weighted Score Calculation
 
@@ -130,7 +204,7 @@ All ViewModels use **`@Observable`** (Swift 5.9 macro, not `ObservableObject`). 
 
 ## Firebase
 
-`GoogleService-Info.plist` is present in the repo. `FirebaseApp.configure()` is called from `AppDelegate`. All Firestore writes use the Codable `Firestore.Encoder().encode()` path rather than raw dictionaries, except for targeted `updateData` calls where only specific fields change.
+`GoogleService-Info.plist` is present in the repo. `FirebaseApp.configure()` is called from `AppDelegate`. The database in use is **Firebase Realtime Database** (not Firestore). All writes go through `DatabaseReference.setValue(_:)` or `updateChildValues(_:)` for partial updates; use `setValue` for full node writes and `updateChildValues` when only specific fields change.
 
 ---
 
