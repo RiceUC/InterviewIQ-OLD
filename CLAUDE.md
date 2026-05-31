@@ -226,7 +226,7 @@ type(scope): short description
 | `fix` | Fixing a bug |
 | `refactor` | Restructuring code without changing behavior |
 | `style` | Formatting, whitespace, naming — no logic change |
-| `docs` | Documentation only (CLAUDE.md, comments, README) |
+| `docs` | Documentation only (comments, README, and similar) |
 | `chore` | Build config, SPM packages, Xcode project settings |
 | `test` | Adding or fixing tests |
 | `perf` | Performance improvement |
@@ -241,6 +241,7 @@ Common scopes in this project: `session-setup`, `live-rating`, `dashboard`, `aut
 - **Scope**: match the feature module or use-case (e.g. `feat(live-rating): ...`). Omit only for truly cross-cutting changes.
 - **One logical change per commit** — do not bundle unrelated changes.
 - **Commit at every meaningful checkpoint**: completing a feature, fixing a bug, finishing a refactor. Do not leave meaningful work uncommitted at the end of a session.
+- **No AI/tooling references**: never mention AI agent files (e.g. `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`) or agentic tooling characteristics in commit messages. Describe the actual change to the project, not the tooling used to make it.
 
 ### Examples
 
@@ -248,6 +249,6 @@ Common scopes in this project: `session-setup`, `live-rating`, `dashboard`, `aut
 feat(session-setup): add CreateEditSessionView and ViewModel stubs
 fix(candidate-lock): deny lock if existing lock has not expired
 refactor(offline-sync): extract syncRecord into private helper
-docs: add CLAUDE.md with architecture and commit conventions
-chore: add AGENTS.md system feature mapping
+docs: update architecture documentation and commit conventions
+chore: configure project build settings and package dependencies
 ```
