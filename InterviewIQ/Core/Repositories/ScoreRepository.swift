@@ -1,10 +1,10 @@
 import Foundation
-import FirebaseFirestore
+import FirebaseDatabase
 
-// Handles local persistence (UserDefaults) and remote Firestore writes for ScoreRecords.
+// Handles local persistence (UserDefaults) and remote Realtime Database writes for ScoreRecords.
 // Offline-first: scores are always saved locally before any network operation (NFR-07).
 final class ScoreRepository {
-    private let db = Firestore.firestore()
+    private let db = Database.database().reference()
     private let localKey = "pending_score_records"
 
     // MARK: - Local (offline-first)
@@ -29,40 +29,41 @@ final class ScoreRepository {
         persist(pending)
     }
 
-    // MARK: - Remote (Firestore)
+    // MARK: - Remote (Realtime Database)
 
     func submit(_ record: ScoreRecord) async throws {
         let ref = db
-            .collection("sessions")
-            .document(record.sessionId)
-            .collection("scoreRecords")
-            .document(record.candidateId)
-        // Firestore's Codable setData(from:) is synchronous; encode to [String:Any]
-        // first so we can use the proper async setData overload.
-        let data = try Firestore.Encoder().encode(record)
-        try await ref.setData(data)
+            .child("sessions")
+            .child(record.sessionId)
+            .child("scoreRecords")
+            .child(record.candidateId)
+
+        let data = try encodeScoreRecord(record)
+        try await ref.setValue(data)
     }
 
     func markAsImmutable(candidateId: String, sessionId: String) async throws {
         let ref = db
-            .collection("sessions")
-            .document(sessionId)
-            .collection("scoreRecords")
-            .document(candidateId)
-        try await ref.updateData([
+            .child("sessions")
+            .child(sessionId)
+            .child("scoreRecords")
+            .child(candidateId)
+
+        try await ref.updateChildValues([
             "isImmutable": true,
-            "lockedAt": Timestamp(date: Date()),
+            "lockedAt": ServerValue.timestamp(),
             "status": "submitted"
         ])
     }
 
     func markAsSynced(candidateId: String, sessionId: String) async throws {
         let ref = db
-            .collection("sessions")
-            .document(sessionId)
-            .collection("scoreRecords")
-            .document(candidateId)
-        try await ref.updateData(["syncStatus": SyncStatus.synced.rawValue])
+            .child("sessions")
+            .child(sessionId)
+            .child("scoreRecords")
+            .child(candidateId)
+
+        try await ref.updateChildValues(["syncStatus": SyncStatus.synced.rawValue])
     }
 
     // MARK: - Private
@@ -79,5 +80,38 @@ final class ScoreRepository {
         if let data = try? JSONEncoder().encode(records) {
             UserDefaults.standard.set(data, forKey: localKey)
         }
+    }
+
+    private func encodeScoreRecord(_ record: ScoreRecord) throws -> [String: Any] {
+        let questionScores: [[String: Any]] = record.questionScores.map { qs in
+            [
+                "id": qs.id,
+                "questionId": qs.questionId,
+                "score": qs.score,
+                "notes": qs.notes
+            ]
+        }
+
+        var data: [String: Any] = [
+            "id": record.id,
+            "candidateId": record.candidateId,
+            "interviewerId": record.interviewerId,
+            "sessionId": record.sessionId,
+            "totalScore": record.totalScore,
+            "notes": record.notes,
+            "status": record.status,
+            "syncStatus": record.syncStatus.rawValue,
+            "isImmutable": record.isImmutable,
+            "questionScores": questionScores
+        ]
+
+        if let submittedAt = record.submittedAt {
+            data["submittedAt"] = submittedAt.timeIntervalSince1970
+        }
+        if let lockedAt = record.lockedAt {
+            data["lockedAt"] = lockedAt.timeIntervalSince1970
+        }
+
+        return data
     }
 }

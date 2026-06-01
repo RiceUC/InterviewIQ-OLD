@@ -1,21 +1,28 @@
 import Foundation
-import FirebaseFirestore
+import FirebaseDatabase
 
-// Reads candidate records for a given session from Firestore.
-// Felix (Session Management) is responsible for writing candidates to
+// Reads candidate records for a given session from Realtime Database.
+// Session Management is responsible for writing candidates to
 // sessions/{sessionId}/candidates/{candidateId} when creating a session.
 final class CandidateRepository {
-    private let db = Firestore.firestore()
+    private let db = Database.database().reference()
 
     func fetchCandidates(sessionId: String) async throws -> [Candidate] {
         let snapshot = try await db
-            .collection("sessions")
-            .document(sessionId)
-            .collection("candidates")
-            .getDocuments()
+            .child("sessions")
+            .child(sessionId)
+            .child("candidates")
+            .getData()
 
-        return try snapshot.documents.compactMap { doc in
-            try doc.data(as: Candidate.self)
+        guard let dict = snapshot.value as? [String: Any] else { return [] }
+
+        return dict.values.compactMap { value in
+            guard let entry = value as? [String: Any],
+                  let id = entry["id"] as? String,
+                  let name = entry["name"] as? String,
+                  let sessionId = entry["sessionId"] as? String
+            else { return nil }
+            return Candidate(id: id, name: name, sessionId: sessionId)
         }
     }
 }
