@@ -1,44 +1,71 @@
 import Foundation
-import FirebaseFirestore
+import FirebaseDatabase
 
 final class SessionRepository {
-    private let db = Firestore.firestore()
+    private let db = Database.database().reference()
 
     func fetchSessions(adminId: String) async throws -> [Session] {
-        let snapshot = try await db
-            .collection("sessions")
-            .whereField("adminId", isEqualTo: adminId)
-            .getDocuments()
+        let snapshot = try await db.child("sessions").getData()
 
-        return try snapshot.documents.compactMap { try $0.data(as: Session.self) }
+        guard let dict = snapshot.value as? [String: Any] else { return [] }
+
+        return dict.values.compactMap { value in
+            guard let entry = value as? [String: Any],
+                  let id = entry["id"] as? String,
+                  let title = entry["title"] as? String,
+                  let dateTimestamp = entry["date"] as? TimeInterval,
+                  let entryAdminId = entry["adminId"] as? String,
+                  entryAdminId == adminId
+            else { return nil }
+
+            let date = Date(timeIntervalSince1970: dateTimestamp)
+            let interviewerIds = entry["interviewerIds"] as? [String] ?? []
+            return Session(id: id, title: title, date: date, adminId: entryAdminId, interviewerIds: interviewerIds)
+        }
     }
 
     func saveSession(_ session: Session) async throws {
-        let data = try Firestore.Encoder().encode(session)
-        try await db.collection("sessions").document(session.id).setData(data)
+        let data = encodeSession(session)
+        try await db.child("sessions").child(session.id).setValue(data)
     }
 
     func updateSession(_ session: Session) async throws {
-        let data = try Firestore.Encoder().encode(session)
-        try await db.collection("sessions").document(session.id).setData(data)
+        let data = encodeSession(session)
+        try await db.child("sessions").child(session.id).setValue(data)
     }
 
     func deleteSession(sessionId: String) async throws {
-        try await db.collection("sessions").document(sessionId).delete()
+        try await db.child("sessions").child(sessionId).removeValue()
     }
 
     func saveCandidate(_ candidate: Candidate, sessionId: String) async throws {
-        let data = try Firestore.Encoder().encode(candidate)
+        let data: [String: Any] = [
+            "id": candidate.id,
+            "name": candidate.name,
+            "sessionId": candidate.sessionId
+        ]
         try await db
-            .collection("sessions").document(sessionId)
-            .collection("candidates").document(candidate.id)
-            .setData(data)
+            .child("sessions").child(sessionId)
+            .child("candidates").child(candidate.id)
+            .setValue(data)
     }
 
     func deleteCandidate(candidateId: String, sessionId: String) async throws {
         try await db
-            .collection("sessions").document(sessionId)
-            .collection("candidates").document(candidateId)
-            .delete()
+            .child("sessions").child(sessionId)
+            .child("candidates").child(candidateId)
+            .removeValue()
+    }
+
+    // MARK: - Private
+
+    private func encodeSession(_ session: Session) -> [String: Any] {
+        return [
+            "id": session.id,
+            "title": session.title,
+            "date": session.date.timeIntervalSince1970,
+            "adminId": session.adminId,
+            "interviewerIds": session.interviewerIds
+        ]
     }
 }
