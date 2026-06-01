@@ -104,29 +104,43 @@ struct SessionDashboardView: View {
 
 private struct SessionRowView: View {
     let session: Session
-
+ 
     var body: some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.accentColor.opacity(0.15))
-                .frame(width: 44, height: 44)
-                .overlay {
-                    Image(systemName: "calendar")
+        NavigationLink {
+            DashboardView(sessionId: session.id, sessionTitle: session.title)
+        } label: {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.accentColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                    .overlay {
+                        Image(systemName: "calendar")
+                            .font(.headline)
+                            .foregroundStyle(Color.accentColor)
+                    }
+ 
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(session.title)
                         .font(.headline)
-                        .foregroundStyle(Color.accentColor)
+ 
+                    Text(session.date, style: .date)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(session.title)
-                    .font(.headline)
-
-                Text(session.date, style: .date)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+ 
+                Spacer()
+ 
+                // "Dashboard" label cue so the admin knows it's tappable
+                Label("Dashboard", systemImage: "chart.bar.fill")
+                    .font(.caption2)
+                    .foregroundStyle(Color.brandPurple.opacity(0.8))
+                    .labelStyle(.iconOnly)
+                    .padding(6)
+                    .background(Color.brandPurple.opacity(0.1))
+                    .clipShape(Circle())
             }
-
-            Spacer()
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, 4)
+        .foregroundStyle(.primary)   // keeps the row text readable in NavigationLink
     }
 }
