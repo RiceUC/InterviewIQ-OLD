@@ -14,14 +14,30 @@
 		3F5D6E4F2FBEDE340073AB47 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3F5D6E4E2FBEDE340073AB47 /* FirebaseDatabase */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		6E80040C2FCD555800248897 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6E5D9CEC2FA85D3D0019B5C8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6E5D9CF32FA85D3D0019B5C8;
+			remoteInfo = InterviewIQ;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		6E5D9CF42FA85D3D0019B5C8 /* InterviewIQ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InterviewIQ.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6E8004082FCD555800248897 /* InterviewIQTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InterviewIQTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6E5D9CF62FA85D3D0019B5C8 /* InterviewIQ */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = InterviewIQ;
+			sourceTree = "<group>";
+		};
+		6E8004092FCD555800248897 /* InterviewIQTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = InterviewIQTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -39,6 +55,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6E8004052FCD555800248897 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -46,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				6E5D9CF62FA85D3D0019B5C8 /* InterviewIQ */,
+				6E8004092FCD555800248897 /* InterviewIQTests */,
 				6E5D9CF52FA85D3D0019B5C8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				6E5D9CF42FA85D3D0019B5C8 /* InterviewIQ.app */,
+				6E8004082FCD555800248897 /* InterviewIQTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -88,6 +113,29 @@
 			productReference = 6E5D9CF42FA85D3D0019B5C8 /* InterviewIQ.app */;
 			productType = "com.apple.product-type.application";
 		};
+		6E8004072FCD555800248897 /* InterviewIQTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6E80040E2FCD555800248897 /* Build configuration list for PBXNativeTarget "InterviewIQTests" */;
+			buildPhases = (
+				6E8004042FCD555800248897 /* Sources */,
+				6E8004052FCD555800248897 /* Frameworks */,
+				6E8004062FCD555800248897 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6E80040D2FCD555800248897 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				6E8004092FCD555800248897 /* InterviewIQTests */,
+			);
+			name = InterviewIQTests;
+			packageProductDependencies = (
+			);
+			productName = InterviewIQTests;
+			productReference = 6E8004082FCD555800248897 /* InterviewIQTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -95,11 +143,15 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2640;
+				LastSwiftUpdateCheck = 2650;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					6E5D9CF32FA85D3D0019B5C8 = {
 						CreatedOnToolsVersion = 26.4.1;
+					};
+					6E8004072FCD555800248897 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 6E5D9CF32FA85D3D0019B5C8;
 					};
 				};
 			};
@@ -121,12 +173,20 @@
 			projectRoot = "";
 			targets = (
 				6E5D9CF32FA85D3D0019B5C8 /* InterviewIQ */,
+				6E8004072FCD555800248897 /* InterviewIQTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		6E5D9CF22FA85D3D0019B5C8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6E8004062FCD555800248897 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -143,7 +203,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6E8004042FCD555800248897 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6E80040D2FCD555800248897 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6E5D9CF32FA85D3D0019B5C8 /* InterviewIQ */;
+			targetProxy = 6E80040C2FCD555800248897 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		6E5D9CFD2FA85D3F0019B5C8 /* Debug */ = {
@@ -329,6 +404,48 @@
 			};
 			name = Release;
 		};
+		6E80040F2FCD555800248897 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.felix.InterviewIQTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/InterviewIQ.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/InterviewIQ";
+			};
+			name = Debug;
+		};
+		6E8004102FCD555800248897 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.felix.InterviewIQTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/InterviewIQ.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/InterviewIQ";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -346,6 +463,15 @@
 			buildConfigurations = (
 				6E5D9D002FA85D3F0019B5C8 /* Debug */,
 				6E5D9D012FA85D3F0019B5C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6E80040E2FCD555800248897 /* Build configuration list for PBXNativeTarget "InterviewIQTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6E80040F2FCD555800248897 /* Debug */,
+				6E8004102FCD555800248897 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
