@@ -34,10 +34,14 @@ final class CreateEditSessionViewModel {
     var candidateEntries: [CandidateEntry] = [CandidateEntry(name: "")]
     var questionEntries: [RubricQuestionEntry] = [RubricQuestionEntry()]
 
-    // Interviewer assignment (FR-10): roster of selectable interviewers and the
-    // ids currently assigned to this session.
-    var availableInterviewers: [UserProfile] = []
+    // Interviewer assignment (FR-10): admins add interviewers by email (no roster
+    // is shown, so other interviewers' emails stay private). assignedInterviewers
+    // holds the resolved profiles for display; selectedInterviewerIds is what's
+    // persisted on the session.
+    var assignedInterviewers: [UserProfile] = []
     var selectedInterviewerIds: Set<String> = []
+    var interviewerEmailInput: String = ""
+    var isAddingInterviewer: Bool = false
 
     var isLoading: Bool = false
     var isSaving: Bool = false
@@ -68,24 +72,39 @@ final class CreateEditSessionViewModel {
         self.userRepo = userRepo
     }
 
-    func toggleInterviewer(_ id: String) {
-        if selectedInterviewerIds.contains(id) {
-            selectedInterviewerIds.remove(id)
-        } else {
-            selectedInterviewerIds.insert(id)
+    // Resolves the typed email to an active interviewer and assigns them.
+    func addInterviewerByEmail() async {
+        let email = interviewerEmailInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !email.isEmpty else { return }
+
+        isAddingInterviewer = true
+        defer { isAddingInterviewer = false }
+
+        do {
+            guard let interviewer = try await userRepo.findInterviewerByEmail(email) else {
+                displayError("No active interviewer found with that email.")
+                return
+            }
+            guard !selectedInterviewerIds.contains(interviewer.userId) else {
+                displayError("\(interviewer.fullName) is already assigned.")
+                return
+            }
+            selectedInterviewerIds.insert(interviewer.userId)
+            assignedInterviewers.append(interviewer)
+            interviewerEmailInput = ""
+        } catch {
+            displayError("Failed to look up interviewer: \(error.localizedDescription)")
         }
+    }
+
+    func removeInterviewer(_ userId: String) {
+        selectedInterviewerIds.remove(userId)
+        assignedInterviewers.removeAll { $0.userId == userId }
     }
 
     func onAppear() async {
         isLoading = true
         defer { isLoading = false }
-
-        // Interviewer roster is needed in both create and edit mode.
-        do {
-            availableInterviewers = try await userRepo.fetchInterviewers()
-        } catch {
-            displayError("Failed to load interviewers: \(error.localizedDescription)")
-        }
 
         guard let session = existingSession else { return }
 
@@ -106,6 +125,14 @@ final class CreateEditSessionViewModel {
                 : existingQuestions.map {
                     RubricQuestionEntry(id: $0.id, prompt: $0.prompt, maxScore: $0.maxScore)
                 }
+
+            // Resolve already-assigned interviewers for display (best-effort).
+            assignedInterviewers = []
+            for uid in session.interviewerIds {
+                if let profile = try? await userRepo.fetchProfile(userId: uid) {
+                    assignedInterviewers.append(profile)
+                }
+            }
         } catch {
             displayError("Failed to load session details: \(error.localizedDescription)")
         }
