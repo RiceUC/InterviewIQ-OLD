@@ -17,7 +17,15 @@ private final class AppAuthState {
         let currentUser = Auth.auth().currentUser
         isLoggedIn = currentUser != nil
         currentUserId = currentUser?.uid ?? ""
+        // Show spinner immediately so ContentView never flashes "Couldn't Load Account"
+        // before the auth listener fires.
+        isLoadingProfile = currentUser != nil
 
+        // Firebase guarantees this listener fires immediately on registration with the
+        // current auth state, so this is the single authoritative place that calls
+        // loadProfile. A second call from init would cause isLoadingProfile to bounce
+        // true→false→true→false, remounting SessionDashboardView and cancelling its
+        // .task before the session fetch completes.
         listenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -27,13 +35,10 @@ private final class AppAuthState {
                     Task { await self.loadProfile(uid: uid) }
                 } else {
                     self.profile = nil
+                    self.isLoadingProfile = false
                     self.profileLoadFailed = false
                 }
             }
-        }
-
-        if let uid = currentUser?.uid {
-            Task { await loadProfile(uid: uid) }
         }
     }
 
