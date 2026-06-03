@@ -24,6 +24,28 @@ final class SessionRepository {
         }
     }
 
+    // Sessions an interviewer is assigned to (interviewerIds contains their uid).
+    // Mirrors fetchSessions(adminId:) but filters on assignment instead of ownership.
+    func fetchAssignedSessions(interviewerId: String) async throws -> [Session] {
+        let snapshot = try await db.child("sessions").getData()
+
+        guard let dict = snapshot.value as? [String: Any] else { return [] }
+
+        return dict.values.compactMap { value in
+            guard let entry = value as? [String: Any],
+                  let id = entry["id"] as? String,
+                  let title = entry["title"] as? String,
+                  let dateTimestamp = entry["date"] as? TimeInterval,
+                  let entryAdminId = entry["adminId"] as? String,
+                  let interviewerIds = entry["interviewerIds"] as? [String],
+                  interviewerIds.contains(interviewerId)
+            else { return nil }
+
+            let date = Date(timeIntervalSince1970: dateTimestamp)
+            return Session(id: id, title: title, date: date, adminId: entryAdminId, interviewerIds: interviewerIds)
+        }
+    }
+
     func saveSession(_ session: Session) async throws {
         let data = encodeSession(session)
         try await db.child("sessions").child(session.id).setValue(data)
