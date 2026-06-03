@@ -71,13 +71,17 @@ final class UserManagementVM {
     func removePanelist(_ profile: UserProfile) async {
         do {
             try accessService.verifyAdminRights(userId: currentUserId, session: session)
-            try await accessService.removePanelist(userId: profile.userId, from: session)
+            // Remove from UI immediately — session.interviewerIds still contains the id
+            // so the service guard passes correctly.
             panelists.removeAll { $0.userId == profile.userId }
+            try await accessService.removePanelist(userId: profile.userId, from: session)
             session.interviewerIds.removeAll { $0 == profile.userId }
             await load()
         } catch let error as UserAccessError {
+            await load()  // restore list to actual server state on failure
             displayError(error.localizedDescription ?? error.localizedDescription)
         } catch {
+            await load()  // restore list to actual server state on failure
             displayError("Failed to remove panelist: \(error.localizedDescription)")
         }
     }
