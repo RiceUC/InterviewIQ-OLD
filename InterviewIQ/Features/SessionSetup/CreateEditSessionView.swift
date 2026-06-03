@@ -3,12 +3,14 @@ import SwiftUI
 struct CreateEditSessionView: View {
     @Bindable var viewModel: CreateEditSessionVM
     @Environment(\.dismiss) private var dismiss
+    @State private var showTeamSheet = false
 
     var body: some View {
         NavigationStack {
             Form {
                 detailsSection
                 candidatesSection
+                if viewModel.isEditMode { teamSection }
                 rubricSection
             }
             .navigationTitle(viewModel.isEditMode ? "Edit Session" : "New Session")
@@ -35,6 +37,16 @@ struct CreateEditSessionView: View {
             }
             .onChange(of: viewModel.didSave) { _, saved in
                 if saved { dismiss() }
+            }
+            .sheet(isPresented: $showTeamSheet) {
+                if let session = viewModel.existingSession {
+                    UserManagementView(
+                        viewModel: UserManagementVM(
+                            session: session,
+                            currentUserId: viewModel.adminId
+                        )
+                    )
+                }
             }
             .task { await viewModel.onAppear() }
             .disabled(viewModel.isSaving || viewModel.isLoading)
@@ -86,6 +98,26 @@ struct CreateEditSessionView: View {
             } label: {
                 Label("Add Candidate", systemImage: "plus.circle")
             }
+        }
+    }
+
+    private var teamSection: some View {
+        Section {
+            Button {
+                showTeamSheet = true
+            } label: {
+                HStack {
+                    Label("Manage Interviewers", systemImage: "person.2.badge.gearshape")
+                        .foregroundStyle(Color.brandPurple)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+        } footer: {
+            Text("Assign or remove interviewers for this session.")
         }
     }
 
