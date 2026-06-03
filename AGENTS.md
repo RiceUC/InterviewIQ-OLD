@@ -23,7 +23,7 @@ The owner of a session (the user who created it) has the authority to assign oth
 
 ## 3. Live Interview Conduction (Panelist)
 Panelists use the app to conduct interviews, leveraging offline-first capabilities and concurrency locking to prevent data overlap.
-
+- Admin should be able to do the live rating, because the admin is the owner of the session.
 * **Active Scoring UI:** Panelists evaluate a **`Candidate`** using the **`LiveRatingScreen`**. Input is managed by the **`LiveRatingVM`**, which holds the `currentCandidate` state and triggers `submitRating()`.
 * **Concurrency Locking (The 1:1 Rule):** When a panelist selects a candidate, the **`InterviewConductorService`** immediately executes `lockCandidate()` to ensure no other panelist can interview the same person simultaneously.
 * **Score Immutability:** Before an interview can be submitted, the `InterviewConductorService` runs `validateAllQuestionsAnswered()`. Once validated, `finalizeInterview()` locks the **`Score`** records permanently.
