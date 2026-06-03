@@ -66,11 +66,16 @@ struct InterviewerHomeView: View {
                     }
                 }
             }
-            .navigationDestination(for: Session.self) { session in
-                InterviewRatingView(
-                    sessionId: session.id,
-                    interviewerId: viewModel.interviewerId
-                )
+            .navigationDestination(for: InterviewerRoute.self) { route in
+                switch route {
+                case .rate(let session):
+                    InterviewRatingView(
+                        sessionId: session.id,
+                        interviewerId: viewModel.interviewerId
+                    )
+                case .dashboard(let session):
+                    DashboardView(sessionId: session.id, sessionTitle: session.title)
+                }
             }
             .alert("Error", isPresented: $viewModel.showError) {
                 Button("OK", role: .cancel) { }
@@ -86,31 +91,53 @@ struct InterviewerHomeView: View {
 
     private var sessionList: some View {
         List(viewModel.sessions) { session in
-            NavigationLink(value: session) {
-                HStack(spacing: 12) {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.accentColor.opacity(0.15))
-                        .frame(width: 44, height: 44)
-                        .overlay {
-                            Image(systemName: "checklist")
-                                .font(.headline)
-                                .foregroundStyle(Color.accentColor)
-                        }
+            HStack(spacing: 12) {
+                // Primary tap → rate the session's candidates.
+                NavigationLink(value: InterviewerRoute.rate(session)) {
+                    HStack(spacing: 12) {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.accentColor.opacity(0.15))
+                            .frame(width: 44, height: 44)
+                            .overlay {
+                                Image(systemName: "checklist")
+                                    .font(.headline)
+                                    .foregroundStyle(Color.accentColor)
+                            }
 
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(session.title)
-                            .font(.headline)
-                        Text(session.date, style: .date)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(session.title)
+                                .font(.headline)
+                            Text(session.date, style: .date)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
-                .padding(.vertical, 4)
+
+                Spacer(minLength: 0)
+
+                // Secondary action → view the comparison dashboard / export (FR-09).
+                NavigationLink(value: InterviewerRoute.dashboard(session)) {
+                    Image(systemName: "chart.bar.fill")
+                        .foregroundStyle(Color.brandPurple)
+                        .padding(8)
+                        .background(Color.brandPurple.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.borderless)
             }
+            .padding(.vertical, 4)
         }
         .listStyle(.insetGrouped)
         .refreshable {
             await viewModel.loadSessions()
         }
     }
+}
+
+// Navigation targets from the interviewer's home: rate a session or view its
+// comparison dashboard (FR-09 gives interviewers dashboard/export access).
+enum InterviewerRoute: Hashable {
+    case rate(Session)
+    case dashboard(Session)
 }
