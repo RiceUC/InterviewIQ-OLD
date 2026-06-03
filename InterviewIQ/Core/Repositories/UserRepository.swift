@@ -41,4 +41,33 @@ final class UserRepository {
             isActive: isActive
         )
     }
+
+    // All active interviewers, for the admin's per-session assignment list.
+    // Mirrors fetchUsers() (C-33) but scoped to assignable accounts.
+    func fetchInterviewers() async throws -> [UserProfile] {
+        let snapshot = try await db.child("users").getData()
+
+        guard let dict = snapshot.value as? [String: Any] else { return [] }
+
+        return dict.compactMap { uid, value in
+            guard let entry = value as? [String: Any],
+                  let name = entry["fullName"] as? String,
+                  let email = entry["emailAddress"] as? String
+            else { return nil }
+
+            let role = (entry["role"] as? String).flatMap(UserRole.init(rawValue:)) ?? .interviewer
+            let isActive = entry["isActive"] as? Bool ?? true
+
+            guard role == .interviewer, isActive else { return nil }
+
+            return UserProfile(
+                userId: uid,
+                fullName: name,
+                emailAddress: email,
+                role: role,
+                isActive: isActive
+            )
+        }
+        .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+    }
 }

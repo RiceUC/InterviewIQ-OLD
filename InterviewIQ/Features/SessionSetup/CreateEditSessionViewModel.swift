@@ -34,6 +34,11 @@ final class CreateEditSessionViewModel {
     var candidateEntries: [CandidateEntry] = [CandidateEntry(name: "")]
     var questionEntries: [RubricQuestionEntry] = [RubricQuestionEntry()]
 
+    // Interviewer assignment (FR-10): roster of selectable interviewers and the
+    // ids currently assigned to this session.
+    var availableInterviewers: [UserProfile] = []
+    var selectedInterviewerIds: Set<String> = []
+
     var isLoading: Bool = false
     var isSaving: Bool = false
     var errorMessage: String = ""
@@ -45,28 +50,48 @@ final class CreateEditSessionViewModel {
     private let service: SessionManagementService
     private let candidateRepo: CandidateRepository
     private let rubricRepo: RubricRepository
+    private let userRepo: UserRepository
 
     init(
         adminId: String,
         existingSession: Session? = nil,
         service: SessionManagementService = SessionManagementService(),
         candidateRepo: CandidateRepository = CandidateRepository(),
-        rubricRepo: RubricRepository = RubricRepository()
+        rubricRepo: RubricRepository = RubricRepository(),
+        userRepo: UserRepository = UserRepository()
     ) {
         self.adminId = adminId
         self.existingSession = existingSession
         self.service = service
         self.candidateRepo = candidateRepo
         self.rubricRepo = rubricRepo
+        self.userRepo = userRepo
+    }
+
+    func toggleInterviewer(_ id: String) {
+        if selectedInterviewerIds.contains(id) {
+            selectedInterviewerIds.remove(id)
+        } else {
+            selectedInterviewerIds.insert(id)
+        }
     }
 
     func onAppear() async {
-        guard let session = existingSession else { return }
         isLoading = true
         defer { isLoading = false }
 
+        // Interviewer roster is needed in both create and edit mode.
+        do {
+            availableInterviewers = try await userRepo.fetchInterviewers()
+        } catch {
+            displayError("Failed to load interviewers: \(error.localizedDescription)")
+        }
+
+        guard let session = existingSession else { return }
+
         title = session.title
         date = session.date
+        selectedInterviewerIds = Set(session.interviewerIds)
 
         do {
             existingCandidates = try await candidateRepo.fetchCandidates(sessionId: session.id)
@@ -132,12 +157,14 @@ final class CreateEditSessionViewModel {
 
         let names = candidateEntries.map { $0.name }
         let questions = buildQuestions()
+        let interviewerIds = Array(selectedInterviewerIds)
 
         do {
             if let session = existingSession {
                 var updated = session
                 updated.title = title
                 updated.date = date
+                updated.interviewerIds = interviewerIds
                 try await service.updateSession(
                     session: updated,
                     candidateNames: names,
@@ -151,7 +178,8 @@ final class CreateEditSessionViewModel {
                     date: date,
                     adminId: adminId,
                     candidateNames: names,
-                    questions: questions
+                    questions: questions,
+                    interviewerIds: interviewerIds
                 )
             }
             didSave = true
