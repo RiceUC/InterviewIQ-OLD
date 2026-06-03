@@ -137,8 +137,12 @@ struct LiveRatingScreen: View {
 
     private var questionDots: some View {
         HStack(spacing: 6) {
-            ForEach(viewModel.questions.indices, id: \.self) { index in
-                let answered = viewModel.scores[viewModel.questions[index].id]?.isAnswered == true
+            // Array(enumerated()) snapshots questions into a copy so the body
+            // never subscripts the live viewModel.questions — prevents a crash
+            // when questions is reassigned from a background thread between the
+            // ForEach range capture and the body evaluation.
+            ForEach(Array(viewModel.questions.enumerated()), id: \.element.id) { index, question in
+                let answered = viewModel.scores[question.id]?.isAnswered == true
                 let isCurrent = index == viewModel.currentQuestionIndex
                 Circle()
                     .fill(isCurrent ? Color.accentColor : (answered ? Color.green : Color.secondary.opacity(0.3)))
