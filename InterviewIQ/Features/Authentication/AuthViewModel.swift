@@ -27,7 +27,11 @@ class AuthViewModel: ObservableObject {
     // app can route by role. Without this, registration created a Firebase Auth
     // user but no profile record, leaving role/name unknown.
     private let userRepository = UserRepository()
-    
+
+    // MARK: - Audit Logging (FR-11)
+    // Records authentication events (registration + login attempts).
+    private let auditLogger = AuditLogger()
+
     // MARK: - Authentication Pipelines
     
     /// Handles targeted conditional user logins matching requirement 3a.1
@@ -64,11 +68,19 @@ class AuthViewModel: ObservableObject {
         
         do {
             // 3. Dispatch auth credentials payload request to Firebase
-            _ = try await Auth.auth().signIn(withEmail: emailAddress, password: userPassword)
-            
+            let result = try await Auth.auth().signIn(withEmail: emailAddress, password: userPassword)
+
             // On Authentication Success: Flush failed records for this email
             accountFailedAttempts[normalizedEmail] = 0
             accountLockExpirations.removeValue(forKey: normalizedEmail)
+
+            await auditLogger.log(
+                .loginSucceeded,
+                actorId: result.user.uid,
+                targetType: "user",
+                targetId: result.user.uid,
+                details: normalizedEmail
+            )
             
             await MainActor.run {
                 self.isLoading = false
@@ -77,11 +89,19 @@ class AuthViewModel: ObservableObject {
             
         } catch {
             let authError = error as NSError
-            
+
+            await auditLogger.log(
+                .loginFailed,
+                actorId: normalizedEmail,
+                targetType: "user",
+                targetId: normalizedEmail,
+                details: "code=\(authError.code)"
+            )
+
             await MainActor.run {
                 self.isLoading = false
                 self.hasAuthenticationError = true
-                
+
                 // 4. Intercept errors to apply contextual security logic
                 switch authError.code {
                     
@@ -158,6 +178,15 @@ class AuthViewModel: ObservableObject {
                 isActive: true
             )
             try await userRepository.saveProfile(profile)
+
+            await auditLogger.log(
+                .userRegistered,
+                actorId: profile.userId,
+                actorRole: profile.role.rawValue,
+                targetType: "user",
+                targetId: profile.userId,
+                details: profile.emailAddress
+            )
 
             // All registration rules passed flawlessly
             await MainActor.run {

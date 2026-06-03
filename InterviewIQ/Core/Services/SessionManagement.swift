@@ -21,13 +21,16 @@ enum SessionValidationError: LocalizedError {
 final class SessionManagementService {
     private let repo: SessionRepository
     private let rubricRepo: RubricRepository
+    private let auditLogger: AuditLogger
 
     init(
         repo: SessionRepository = SessionRepository(),
-        rubricRepo: RubricRepository = RubricRepository()
+        rubricRepo: RubricRepository = RubricRepository(),
+        auditLogger: AuditLogger = AuditLogger()
     ) {
         self.repo = repo
         self.rubricRepo = rubricRepo
+        self.auditLogger = auditLogger
     }
 
     // Validates session, candidates, and rubric together — a session is only
@@ -89,6 +92,15 @@ final class SessionManagementService {
             try await rubricRepo.saveQuestion(question, sessionId: session.id)
         }
 
+        await auditLogger.log(
+            .sessionCreated,
+            actorId: adminId,
+            actorRole: UserRole.admin.rawValue,
+            targetType: "session",
+            targetId: session.id,
+            details: session.title
+        )
+
         return session
     }
 
@@ -129,9 +141,26 @@ final class SessionManagementService {
         for question in questions {
             try await rubricRepo.saveQuestion(question, sessionId: session.id)
         }
+
+        await auditLogger.log(
+            .sessionUpdated,
+            actorId: session.adminId,
+            actorRole: UserRole.admin.rawValue,
+            targetType: "session",
+            targetId: session.id,
+            details: session.title
+        )
     }
 
-    func deleteSession(sessionId: String) async throws {
+    func deleteSession(sessionId: String, actorId: String) async throws {
         try await repo.deleteSession(sessionId: sessionId)
+
+        await auditLogger.log(
+            .sessionDeleted,
+            actorId: actorId,
+            actorRole: UserRole.admin.rawValue,
+            targetType: "session",
+            targetId: sessionId
+        )
     }
 }
