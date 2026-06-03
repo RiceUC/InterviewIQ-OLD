@@ -5,20 +5,20 @@
 
 ---
 
-## 1. Session & Rubric Management (Admin)
-Administrators can create interview events and define the standardized grading criteria.
+## 1. Session & Rubric Management (Session Creator)
+Any authenticated user can create an interview session. By doing so, they automatically become the **session owner** — referred to throughout as the "admin" of that session. This is a session-scoped role, not a global privilege; the same user can own one session while participating as a panelist in another.
 
-* **View Active Sessions:** Users can view a list of all active sessions via the **`SessionDashboard`**, which binds to the **`SessionDashboardVM`**.
-* **Create/Edit Sessions:** Admins can define the event's `title` and `date` using the **`CreateEditSessionView`** and **`CreateEditSessionVM`**.
+* **View Active Sessions:** Each user sees only the sessions they own via the **`SessionDashboard`**, which binds to the **`SessionDashboardVM`** and filters by the creator's user ID.
+* **Create/Edit Sessions:** The session creator can define the event's `title` and `date` using the **`CreateEditSessionView`** and **`CreateEditSessionVM`**.
 * **Define Scoring Rubrics:** Admins can create **`RubricQuestion`** objects, defining specific prompts and weight multipliers using the **`CreateEditRubricView`** and **`CreateEditRubricVM`**.
 * **Business Logic:** The **`SessionManagementService`** intercepts these actions to ensure data validity. Crucially, it enforces the `lockRubricEdits()` rule, ensuring that once a session is active, the rubric cannot be modified.
 * **Data Access:** Data is routed through the **`SessionRepository`** and **`RubricRepository`**.
 
-## 2. User & Panelist Management (Admin)
-Administrators have the authority to assign existing users to specific interview sessions.
+## 2. User & Panelist Management (Session Owner)
+The owner of a session (the user who created it) has the authority to assign other existing users as panelists for that specific session.
 
 * **Assign Roles:** The **`UserManagementView`** (driven by **`UserManagementVM`**) provides the UI for selecting users and assigning them as panelists for a session.
-* **Business Logic:** The **`UserAccessService`** handles this flow. It first runs `verifyAdminRights()` to ensure the current user is authorized, and then executes `attachPanelist()` to grant the selected **`User`** access to the session.
+* **Business Logic:** The **`UserAccessService`** handles this flow. It first runs `verifyAdminRights()` to confirm the requesting user is the owner of the target session (not a system-wide role check), and then executes `attachPanelist()` to grant the selected **`User`** access to the session.
 * **Data Access:** Changes to user roles and session assignments are managed by the **`UserRepository`**.
 
 ## 3. Live Interview Conduction (Panelist)
@@ -29,8 +29,8 @@ Panelists use the app to conduct interviews, leveraging offline-first capabiliti
 * **Score Immutability:** Before an interview can be submitted, the `InterviewConductorService` runs `validateAllQuestionsAnswered()`. Once validated, `finalizeInterview()` locks the **`Score`** records permanently.
 * **Data Access & Offline Sync:** The **`ScoreRepository`** attempts to save the data. It writes to the **`LocalPersistenceController`** first. If the device is offline, the **`OfflineSyncManager`** uses `queueOfflineData()` to hold the payload, continually running `monitorConnectivity()` until it can successfully `pushQueuedData()` to the **`NetworkAPIClient`**.
 
-## 4. Candidate Ranking & Dashboard (Admin)
-After interviews are completed, administrators can review objective, mathematically weighted rankings.
+## 4. Candidate Ranking & Dashboard (Session Owner)
+After interviews are completed, the session owner can review objective, mathematically weighted rankings for the candidates in their session.
 
 * **Dashboard Display:** The **`DashboardComparisonView`** displays the final list of candidates. The UI simply observes the `rankedCandidates` list provided by the **`DashboardComparisonVM`**.
 * **Calculation Engine:** The ViewModel relies on the **`CandidateRankingService`**. This service acts as the mathematical core, running `calculateWeightedScore()` by combining raw scores with rubric weights, and then executing `sortCandidates()` to generate the final hierarchy.
