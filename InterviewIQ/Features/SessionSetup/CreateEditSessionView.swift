@@ -9,6 +9,7 @@ struct CreateEditSessionView: View {
             Form {
                 detailsSection
                 candidatesSection
+                rubricSection
                 interviewersSection
             }
             .navigationTitle(viewModel.isEditMode ? "Edit Session" : "New Session")
@@ -86,6 +87,46 @@ struct CreateEditSessionView: View {
             } label: {
                 Label("Add Candidate", systemImage: "plus.circle")
             }
+        }
+    }
+
+    private var rubricSection: some View {
+        Section {
+            ForEach($viewModel.questionEntries) { $entry in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        TextField("Question prompt", text: $entry.prompt, axis: .vertical)
+                        if viewModel.questionEntries.count > 1 {
+                            Button {
+                                if let index = viewModel.questionEntries.firstIndex(where: { $0.id == entry.id }) {
+                                    viewModel.removeQuestion(at: IndexSet(integer: index))
+                                }
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    Stepper(value: $entry.maxScore, in: 1...100) {
+                        Text("Max score: \(entry.maxScore)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+
+            Button {
+                viewModel.addQuestionRow()
+            } label: {
+                Label("Add Question", systemImage: "plus.circle")
+            }
+        } header: {
+            Text("Scoring Rubric")
+        } footer: {
+            Text("Interviewers score each question from 1 to its max. Add at least one question.")
         }
     }
 
