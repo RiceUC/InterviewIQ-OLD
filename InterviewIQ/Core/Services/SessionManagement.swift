@@ -7,6 +7,7 @@ enum SessionValidationError: LocalizedError {
     case noQuestions
     case invalidMaxScore
     case hasSubmittedScores
+    case rubricLocked
 
     var errorDescription: String? {
         switch self {
@@ -16,6 +17,7 @@ enum SessionValidationError: LocalizedError {
         case .noQuestions:        return "Add at least one rubric question before saving."
         case .invalidMaxScore:    return "Each question's max score must be at least 1."
         case .hasSubmittedScores: return "This session has submitted scores and cannot be deleted."
+        case .rubricLocked:       return "The rubric cannot be changed once scoring has started."
         }
     }
 }
@@ -173,5 +175,29 @@ final class SessionManagementService {
             targetType: "session",
             targetId: sessionId
         )
+    }
+
+    // MARK: - Rubric management (post-creation)
+
+    // Throws rubricLocked if any score has been submitted for the session.
+    // Call this before any rubric write to enforce the immutability rule.
+    func lockRubricEdits(sessionId: String) async throws {
+        if try await scoreRepo.hasSubmittedScores(sessionId: sessionId) {
+            throw SessionValidationError.rubricLocked
+        }
+    }
+
+    func saveRubricQuestion(_ question: RubricQuestion, sessionId: String) async throws {
+        try await lockRubricEdits(sessionId: sessionId)
+        try await rubricRepo.saveQuestion(question, sessionId: sessionId)
+    }
+
+    func deleteRubricQuestion(questionId: String, sessionId: String) async throws {
+        try await lockRubricEdits(sessionId: sessionId)
+        try await rubricRepo.deleteQuestion(questionId: questionId, sessionId: sessionId)
+    }
+
+    func fetchRubricQuestions(sessionId: String) async throws -> [RubricQuestion] {
+        try await rubricRepo.fetchQuestions(sessionId: sessionId)
     }
 }
