@@ -45,6 +45,11 @@ final class UserRepository {
     // All active interviewers, for the admin's per-session assignment list.
     // Mirrors fetchUsers() (C-33) but scoped to assignable accounts.
     func fetchInterviewers() async throws -> [UserProfile] {
+        try await fetchAllUsers().filter { $0.role == .interviewer && $0.isActive }
+    }
+
+    // Every registered user, for the admin user-management screen (FR-10).
+    func fetchAllUsers() async throws -> [UserProfile] {
         let snapshot = try await db.child("users").getData()
 
         guard let dict = snapshot.value as? [String: Any] else { return [] }
@@ -58,8 +63,6 @@ final class UserRepository {
             let role = (entry["role"] as? String).flatMap(UserRole.init(rawValue:)) ?? .interviewer
             let isActive = entry["isActive"] as? Bool ?? true
 
-            guard role == .interviewer, isActive else { return nil }
-
             return UserProfile(
                 userId: uid,
                 fullName: name,
@@ -69,5 +72,22 @@ final class UserRepository {
             )
         }
         .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+    }
+
+    // True when no account exists yet — used to bootstrap the very first user
+    // as Admin (so roles aren't self-selected at registration).
+    func hasAnyUsers() async throws -> Bool {
+        let snapshot = try await db.child("users").getData()
+        return snapshot.exists() && (snapshot.value as? [String: Any])?.isEmpty == false
+    }
+
+    // Admin-only mutations. Update a single field rather than rewriting the whole
+    // profile so concurrent edits to other fields aren't clobbered.
+    func updateRole(userId: String, role: UserRole) async throws {
+        try await db.child("users").child(userId).child("role").setValue(role.rawValue)
+    }
+
+    func setActive(userId: String, isActive: Bool) async throws {
+        try await db.child("users").child(userId).child("isActive").setValue(isActive)
     }
 }
