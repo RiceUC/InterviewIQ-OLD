@@ -8,13 +8,14 @@ struct InterviewRatingView: View {
     @State private var viewModel = InterviewRatingViewModel()
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if viewModel.isInRatingPhase {
-                    ratingScreen
-                } else {
-                    CandidateListView(viewModel: viewModel)
-                }
+        // No NavigationStack here: this view is always pushed inside the
+        // interviewer home's stack. Nesting stacks broke navigation (candidate
+        // list wasn't reachable). It swaps candidate-list <-> rating in place.
+        Group {
+            if viewModel.isInRatingPhase {
+                ratingScreen
+            } else {
+                CandidateListView(viewModel: viewModel)
             }
         }
         .task {
