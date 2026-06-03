@@ -59,9 +59,12 @@ final class UserAccessService {
     }
 
     // Returns full UserProfile for each assigned panelist (best-effort; skips unresolvable ids).
+    // Reads interviewerIds fresh from Firebase so callers with a stale Session value still
+    // see the current list after an attach/remove.
     func fetchPanelists(for session: Session) async throws -> [UserProfile] {
+        let freshIds = try await sessionRepo.fetchInterviewerIds(sessionId: session.id)
         var profiles: [UserProfile] = []
-        for uid in session.interviewerIds {
+        for uid in freshIds {
             if let profile = try? await userRepo.fetchProfile(userId: uid) {
                 profiles.append(profile)
             }
