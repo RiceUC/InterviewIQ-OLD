@@ -7,7 +7,7 @@ import SwiftUI
 // Uses UserAccessService to enforce ownership before any mutation.
 @Observable
 final class UserManagementVM {
-    let session: Session
+    private(set) var session: Session
     let currentUserId: String
 
     var panelists: [UserProfile] = []
@@ -55,6 +55,11 @@ final class UserManagementVM {
             }
             try await accessService.attachPanelist(userId: user.userId, to: session)
             emailInput = ""
+            // Optimistic update: show the new panelist immediately without waiting
+            // for another Firebase round-trip. Also keep session.interviewerIds in
+            // sync so a subsequent add doesn't overwrite this one.
+            panelists.append(user)
+            session.interviewerIds.append(user.userId)
             await load()
         } catch let error as UserAccessError {
             displayError(error.localizedDescription ?? error.localizedDescription)
@@ -67,6 +72,8 @@ final class UserManagementVM {
         do {
             try accessService.verifyAdminRights(userId: currentUserId, session: session)
             try await accessService.removePanelist(userId: profile.userId, from: session)
+            panelists.removeAll { $0.userId == profile.userId }
+            session.interviewerIds.removeAll { $0 == profile.userId }
             await load()
         } catch let error as UserAccessError {
             displayError(error.localizedDescription ?? error.localizedDescription)
