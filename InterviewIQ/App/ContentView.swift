@@ -6,7 +6,6 @@ private final class AppAuthState {
     var isLoggedIn: Bool
     var currentUserId: String
 
-    // Profile drives RBAC routing. nil while loading or if the lookup failed.
     var profile: UserProfile?
     var isLoadingProfile: Bool = false
     var profileLoadFailed: Bool = false
@@ -45,8 +44,6 @@ private final class AppAuthState {
         defer { isLoadingProfile = false }
         do {
             profile = try await userRepository.fetchProfile(userId: uid)
-            // A logged-in user with no profile record is treated as a failure so
-            // we don't silently grant a default role to an unknown account.
             profileLoadFailed = (profile == nil)
         } catch {
             profile = nil
@@ -76,32 +73,20 @@ struct ContentView: View {
         } else if authState.isLoadingProfile {
             ProgressView("Loading your account…")
         } else if let profile = authState.profile, profile.isActive {
-            roleHome(for: profile)
+            // All authenticated users go to the unified session dashboard (Q1-B).
+            // Session ownership is determined per-session, not by a global role.
+            SessionDashboardView(
+                viewModel: SessionDashboardVM(userId: profile.userId)
+            )
         } else if authState.profile?.isActive == false {
             accountIssue(
                 title: "Account Deactivated",
                 message: "Your account has been deactivated. Please contact your administrator."
             )
         } else {
-            // profileLoadFailed or nil profile
             accountIssue(
                 title: "Couldn't Load Account",
                 message: "We couldn't load your profile. Check your connection and try again."
-            )
-        }
-    }
-
-    // Routes to the correct home screen for the user's role (FR-02).
-    @ViewBuilder
-    private func roleHome(for profile: UserProfile) -> some View {
-        switch profile.role {
-        case .admin:
-            SessionDashboardView(
-                viewModel: SessionDashboardVM(adminId: profile.userId)
-            )
-        case .interviewer:
-            InterviewerHomeView(
-                viewModel: InterviewerHomeViewModel(interviewerId: profile.userId)
             )
         }
     }

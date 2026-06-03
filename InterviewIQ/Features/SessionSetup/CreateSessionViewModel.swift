@@ -2,31 +2,51 @@ import Foundation
 
 @Observable
 final class SessionDashboardVM {
-    let adminId: String
+    let userId: String
 
-    var sessions: [Session] = []
+    // Sessions this user created (owner view).
+    var ownedSessions: [Session] = []
+    // Sessions this user is assigned to as a panelist.
+    var assignedSessions: [Session] = []
+
     var isLoading: Bool = false
     var errorMessage: String = ""
     var showError: Bool = false
 
-    var showDeleteConfirmation: Bool = false
-    var sessionToDelete: Session?
-
+    // Create / edit sheet
     var showCreateSheet: Bool = false
     var sessionToEdit: Session?
 
-    private let service: SessionManagementService
+    // Delete confirmation
+    var showDeleteConfirmation: Bool = false
+    var sessionToDelete: Session?
 
-    init(adminId: String, service: SessionManagementService = SessionManagementService()) {
-        self.adminId = adminId
+    // Per-session team management sheet
+    var sessionForTeam: Session?
+
+    // Per-session rubric editing sheet
+    var sessionForRubric: Session?
+
+    private let service: SessionManagementService
+    private let repo: SessionRepository
+
+    init(
+        userId: String,
+        service: SessionManagementService = SessionManagementService(),
+        repo: SessionRepository = SessionRepository()
+    ) {
+        self.userId = userId
         self.service = service
+        self.repo = repo
     }
 
     func loadSessions() async {
         isLoading = true
         defer { isLoading = false }
         do {
-            sessions = try await service.loadSessions(adminId: adminId)
+            async let owned    = service.loadSessions(adminId: userId)
+            async let assigned = repo.fetchAssignedSessions(interviewerId: userId)
+            (ownedSessions, assignedSessions) = try await (owned, assigned)
         } catch {
             displayError("Failed to load sessions: \(error.localizedDescription)")
         }
@@ -40,8 +60,8 @@ final class SessionDashboardVM {
     func confirmDelete() async {
         guard let session = sessionToDelete else { return }
         do {
-            try await service.deleteSession(sessionId: session.id, actorId: adminId)
-            sessions.removeAll { $0.id == session.id }
+            try await service.deleteSession(sessionId: session.id, actorId: userId)
+            ownedSessions.removeAll { $0.id == session.id }
         } catch {
             displayError("Failed to delete session: \(error.localizedDescription)")
         }
