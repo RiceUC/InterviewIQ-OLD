@@ -38,6 +38,7 @@ final class InterviewerHomeViewModel {
 // live rating flow (CandidateListView → rating) for that session.
 struct InterviewerHomeView: View {
     @State var viewModel: InterviewerHomeViewModel
+    @State private var showingProfile = false
 
     var body: some View {
         NavigationStack {
@@ -56,6 +57,15 @@ struct InterviewerHomeView: View {
             }
             .navigationTitle("My Interviews")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingProfile = true
+                    } label: {
+                        Image(systemName: "person.crop.circle")
+                    }
+                }
+            }
             .navigationDestination(for: Session.self) { session in
                 InterviewRatingView(
                     sessionId: session.id,
@@ -66,6 +76,9 @@ struct InterviewerHomeView: View {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(viewModel.errorMessage)
+            }
+            .sheet(isPresented: $showingProfile) {
+                ProfileView(userId: viewModel.interviewerId)
             }
         }
         .task { await viewModel.loadSessions() }
