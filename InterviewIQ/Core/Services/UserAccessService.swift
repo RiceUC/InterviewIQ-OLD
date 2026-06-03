@@ -43,9 +43,8 @@ final class UserAccessService {
         guard !session.interviewerIds.contains(userId) else {
             throw UserAccessError.alreadyAssigned
         }
-        var updated = session
-        updated.interviewerIds.append(userId)
-        try await sessionRepo.updateSession(updated)
+        let updated = session.interviewerIds + [userId]
+        try await sessionRepo.updateInterviewerIds(sessionId: session.id, interviewerIds: updated)
     }
 
     // Removes a panelist from the session.
@@ -53,9 +52,8 @@ final class UserAccessService {
         guard session.interviewerIds.contains(userId) else {
             throw UserAccessError.notAssigned
         }
-        var updated = session
-        updated.interviewerIds.removeAll { $0 == userId }
-        try await sessionRepo.updateSession(updated)
+        let updated = session.interviewerIds.filter { $0 != userId }
+        try await sessionRepo.updateInterviewerIds(sessionId: session.id, interviewerIds: updated)
     }
 
     // Returns full UserProfile for each assigned panelist (best-effort; skips unresolvable ids).

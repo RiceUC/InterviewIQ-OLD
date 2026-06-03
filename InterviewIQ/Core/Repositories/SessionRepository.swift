@@ -64,6 +64,18 @@ final class SessionRepository {
         return snapshot.value as? [String] ?? []
     }
 
+    // Writes ONLY the interviewerIds child — never touches candidates, rubricQuestions,
+    // scoreRecords, or any other session data. Use this for all panelist mutations so
+    // updateSession (which encodes the full session) is never called for these operations.
+    func updateInterviewerIds(sessionId: String, interviewerIds: [String]) async throws {
+        let ref = db.child("sessions").child(sessionId).child("interviewerIds")
+        if interviewerIds.isEmpty {
+            try await ref.removeValue()
+        } else {
+            try await ref.setValue(interviewerIds)
+        }
+    }
+
     func deleteSession(sessionId: String) async throws {
         try await db.child("sessions").child(sessionId).removeValue()
     }
