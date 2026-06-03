@@ -69,11 +69,12 @@ final class SessionManagementService {
         date: Date,
         adminId: String,
         candidateNames: [String],
-        questions: [RubricQuestion]
+        questions: [RubricQuestion],
+        interviewerIds: [String] = []
     ) async throws -> Session {
         try validateSession(title: title, date: date, candidateNames: candidateNames, questions: questions)
 
-        let session = Session(title: title, date: date, adminId: adminId)
+        let session = Session(title: title, date: date, adminId: adminId, interviewerIds: interviewerIds)
         try await repo.saveSession(session)
 
         let nonEmpty = candidateNames.filter {

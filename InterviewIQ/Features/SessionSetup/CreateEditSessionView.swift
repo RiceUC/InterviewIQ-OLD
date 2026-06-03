@@ -131,10 +131,41 @@ struct CreateEditSessionView: View {
     }
 
     private var interviewersSection: some View {
-        Section("Interviewers") {
-            NavigationLink("Manage Interviewers") {
-                UserManagementView()
+        Section {
+            if viewModel.availableInterviewers.isEmpty {
+                Text("No interviewers have registered yet.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(viewModel.availableInterviewers, id: \.userId) { interviewer in
+                    Button {
+                        viewModel.toggleInterviewer(interviewer.userId)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(interviewer.fullName)
+                                    .foregroundStyle(.primary)
+                                Text(interviewer.emailAddress)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if viewModel.selectedInterviewerIds.contains(interviewer.userId) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(Color.accentColor)
+                            } else {
+                                Image(systemName: "circle")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+        } header: {
+            Text("Interviewers")
+        } footer: {
+            Text("Assigned interviewers see this session in their \"My Interviews\" list.")
         }
     }
 }
