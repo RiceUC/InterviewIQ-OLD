@@ -106,8 +106,8 @@ final class SessionRepository {
             "id": session.id,
             "title": session.title,
             "date": session.date.timeIntervalSince1970,
-            "adminId": session.adminId,
-            "interviewerIds": session.interviewerIds
+            "adminId": session.adminId
+            // interviewerIds is intentionally excluded — all mutations go through updateInterviewerIds
         ]
     }
 }
