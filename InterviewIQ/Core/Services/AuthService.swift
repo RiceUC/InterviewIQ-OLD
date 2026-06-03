@@ -2,6 +2,12 @@ import Foundation
 import FirebaseAuth
 import FirebaseDatabase
 
+// ⚠️ SUPERSEDED / UNUSED.
+// The live auth flow uses AuthViewModel for sign-in/registration and
+// UserRepository for profile read/write at users/{uid}. This class was never
+// wired into any view and now duplicates UserRepository. Kept only so existing
+// references compile — safe to delete once the team confirms nothing depends on it.
+
 // MARK: - Errors
 
 enum AuthenticationError: Error {
