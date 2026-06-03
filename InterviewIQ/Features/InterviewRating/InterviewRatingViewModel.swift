@@ -31,7 +31,7 @@ final class LiveRatingVM {
     private let conductor = InterviewConductorService()
     private let scoreRepo = ScoreRepository()
     private let candidateRepo = CandidateRepository()
-    let syncManager = OfflineSyncManager()    // internal: InterviewRatingView reads isOnline
+    let syncManager = OfflineSyncManager()    // internal: LiveRatingScreen reads isOnline
 
     // MARK: - Computed helpers
 

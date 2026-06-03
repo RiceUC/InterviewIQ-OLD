@@ -7,7 +7,7 @@
 
 import Foundation
 
-// DashboardViewModel (C-10): drives DashboardView for UC-05.
+// DashboardComparisonVM (C-10): drives DashboardComparisonView for UC-05.
 // Fetches ranked candidates from CandidateRankingService and exposes
 // export helpers consumed by the export sheet.
 @Observable

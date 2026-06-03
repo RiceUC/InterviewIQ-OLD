@@ -221,19 +221,19 @@ final class CandidateRankingServiceTests: XCTestCase {
     }
 }
 
-// MARK: - DashboardViewModel — computed properties
+// MARK: - DashboardComparisonVM — computed properties
 
-final class DashboardViewModelTests: XCTestCase {
+final class DashboardComparisonVMTests: XCTestCase {
 
     // MARK: hasData
 
     func test_hasData_falseWhenEmpty() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         XCTAssertFalse(vm.hasData)
     }
 
     func test_hasData_trueWhenCandidatesLoaded() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         vm.rankedCandidates = [makeRankedCandidate(name: "Alice", totalScore: 80, rank: 1)]
         XCTAssertTrue(vm.hasData)
     }
@@ -241,12 +241,12 @@ final class DashboardViewModelTests: XCTestCase {
     // MARK: topCandidate
 
     func test_topCandidate_nilWhenEmpty() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         XCTAssertNil(vm.topCandidate)
     }
 
     func test_topCandidate_isFirstInList() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         let alice = makeRankedCandidate(name: "Alice", totalScore: 90, rank: 1)
         let bob   = makeRankedCandidate(name: "Bob",   totalScore: 75, rank: 2)
         vm.rankedCandidates = [alice, bob]
@@ -258,19 +258,19 @@ final class DashboardViewModelTests: XCTestCase {
     // MARK: averageScore
 
     func test_averageScore_zeroWhenEmpty() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         XCTAssertEqual(vm.averageScore, 0)
     }
 
     func test_averageScore_singleCandidate_equalsThatScore() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         vm.rankedCandidates = [makeRankedCandidate(name: "Alice", totalScore: 72, rank: 1)]
         XCTAssertEqual(vm.averageScore, 72)
     }
 
     func test_averageScore_multipleCandidates_computesCorrectly() {
         // (80 + 60 + 70) / 3 = 70
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         vm.rankedCandidates = [
             makeRankedCandidate(name: "Alice", totalScore: 80, rank: 1),
             makeRankedCandidate(name: "Bob",   totalScore: 60, rank: 2),
@@ -281,7 +281,7 @@ final class DashboardViewModelTests: XCTestCase {
 
     func test_averageScore_truncatesNotRounds() {
         // (90 + 91) / 2 = 90 (Int division truncates)
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         vm.rankedCandidates = [
             makeRankedCandidate(name: "Alice", totalScore: 90, rank: 1),
             makeRankedCandidate(name: "Bob",   totalScore: 91, rank: 2)
@@ -292,22 +292,22 @@ final class DashboardViewModelTests: XCTestCase {
     // MARK: Initial state
 
     func test_initialState_isLoading_false() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         XCTAssertFalse(vm.isLoading)
     }
 
     func test_initialState_showError_false() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         XCTAssertFalse(vm.showError)
     }
 
     func test_initialState_sessionId_isEmpty() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         XCTAssertTrue(vm.sessionId.isEmpty)
     }
 
     func test_initialState_isExporting_false() {
-        let vm = DashboardViewModel()
+        let vm = DashboardComparisonVM()
         XCTAssertFalse(vm.isExporting)
     }
 }
