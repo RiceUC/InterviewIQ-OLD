@@ -77,12 +77,12 @@ final class SessionManagementService {
         date: Date,
         adminId: String,
         candidateNames: [String],
-        questions: [RubricQuestion],
-        interviewerIds: [String] = []
+        questions: [RubricQuestion]
     ) async throws -> Session {
         try validateSession(title: title, date: date, candidateNames: candidateNames, questions: questions)
 
-        let session = Session(title: title, date: date, adminId: adminId, interviewerIds: interviewerIds)
+        // Panelist assignment is handled post-creation by UserAccessService.
+        let session = Session(title: title, date: date, adminId: adminId, interviewerIds: [])
         try await repo.saveSession(session)
 
         let nonEmpty = candidateNames.filter {

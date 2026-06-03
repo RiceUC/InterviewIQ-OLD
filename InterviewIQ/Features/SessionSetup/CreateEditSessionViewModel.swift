@@ -34,15 +34,6 @@ final class CreateEditSessionVM {
     var candidateEntries: [CandidateEntry] = [CandidateEntry(name: "")]
     var questionEntries: [RubricQuestionEntry] = [RubricQuestionEntry()]
 
-    // Interviewer assignment (FR-10): admins add interviewers by email (no roster
-    // is shown, so other interviewers' emails stay private). assignedInterviewers
-    // holds the resolved profiles for display; selectedInterviewerIds is what's
-    // persisted on the session.
-    var assignedInterviewers: [UserProfile] = []
-    var selectedInterviewerIds: Set<String> = []
-    var interviewerEmailInput: String = ""
-    var isAddingInterviewer: Bool = false
-
     var isLoading: Bool = false
     var isSaving: Bool = false
     var errorMessage: String = ""
@@ -54,52 +45,19 @@ final class CreateEditSessionVM {
     private let service: SessionManagementService
     private let candidateRepo: CandidateRepository
     private let rubricRepo: RubricRepository
-    private let userRepo: UserRepository
 
     init(
         adminId: String,
         existingSession: Session? = nil,
         service: SessionManagementService = SessionManagementService(),
         candidateRepo: CandidateRepository = CandidateRepository(),
-        rubricRepo: RubricRepository = RubricRepository(),
-        userRepo: UserRepository = UserRepository()
+        rubricRepo: RubricRepository = RubricRepository()
     ) {
         self.adminId = adminId
         self.existingSession = existingSession
         self.service = service
         self.candidateRepo = candidateRepo
         self.rubricRepo = rubricRepo
-        self.userRepo = userRepo
-    }
-
-    // Resolves the typed email to an active interviewer and assigns them.
-    func addInterviewerByEmail() async {
-        let email = interviewerEmailInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !email.isEmpty else { return }
-
-        isAddingInterviewer = true
-        defer { isAddingInterviewer = false }
-
-        do {
-            guard let interviewer = try await userRepo.findInterviewerByEmail(email) else {
-                displayError("No active interviewer found with that email.")
-                return
-            }
-            guard !selectedInterviewerIds.contains(interviewer.userId) else {
-                displayError("\(interviewer.fullName) is already assigned.")
-                return
-            }
-            selectedInterviewerIds.insert(interviewer.userId)
-            assignedInterviewers.append(interviewer)
-            interviewerEmailInput = ""
-        } catch {
-            displayError("Failed to look up interviewer: \(error.localizedDescription)")
-        }
-    }
-
-    func removeInterviewer(_ userId: String) {
-        selectedInterviewerIds.remove(userId)
-        assignedInterviewers.removeAll { $0.userId == userId }
     }
 
     func onAppear() async {
@@ -110,7 +68,6 @@ final class CreateEditSessionVM {
 
         title = session.title
         date = session.date
-        selectedInterviewerIds = Set(session.interviewerIds)
 
         do {
             existingCandidates = try await candidateRepo.fetchCandidates(sessionId: session.id)
@@ -125,14 +82,6 @@ final class CreateEditSessionVM {
                 : existingQuestions.map {
                     RubricQuestionEntry(id: $0.id, prompt: $0.prompt, maxScore: $0.maxScore)
                 }
-
-            // Resolve already-assigned interviewers for display (best-effort).
-            assignedInterviewers = []
-            for uid in session.interviewerIds {
-                if let profile = try? await userRepo.fetchProfile(userId: uid) {
-                    assignedInterviewers.append(profile)
-                }
-            }
         } catch {
             displayError("Failed to load session details: \(error.localizedDescription)")
         }
@@ -184,14 +133,14 @@ final class CreateEditSessionVM {
 
         let names = candidateEntries.map { $0.name }
         let questions = buildQuestions()
-        let interviewerIds = Array(selectedInterviewerIds)
 
         do {
             if let session = existingSession {
                 var updated = session
                 updated.title = title
                 updated.date = date
-                updated.interviewerIds = interviewerIds
+                // interviewerIds are managed exclusively by UserAccessService/UserManagementView;
+                // preserve them unchanged so edits here never wipe panelist assignments.
                 try await service.updateSession(
                     session: updated,
                     candidateNames: names,
@@ -205,8 +154,7 @@ final class CreateEditSessionVM {
                     date: date,
                     adminId: adminId,
                     candidateNames: names,
-                    questions: questions,
-                    interviewerIds: interviewerIds
+                    questions: questions
                 )
             }
             didSave = true

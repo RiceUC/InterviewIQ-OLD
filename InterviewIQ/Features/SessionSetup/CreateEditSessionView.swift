@@ -10,7 +10,6 @@ struct CreateEditSessionView: View {
                 detailsSection
                 candidatesSection
                 rubricSection
-                interviewersSection
             }
             .navigationTitle(viewModel.isEditMode ? "Edit Session" : "New Session")
             .navigationBarTitleDisplayMode(.inline)
@@ -130,50 +129,4 @@ struct CreateEditSessionView: View {
         }
     }
 
-    private var interviewersSection: some View {
-        Section {
-            HStack {
-                TextField("Interviewer email", text: $viewModel.interviewerEmailInput)
-                    .textInputAutocapitalization(.never)
-                    .keyboardType(.emailAddress)
-                    .autocorrectionDisabled()
-                    .onSubmit { Task { await viewModel.addInterviewerByEmail() } }
-
-                if viewModel.isAddingInterviewer {
-                    ProgressView()
-                } else {
-                    Button {
-                        Task { await viewModel.addInterviewerByEmail() }
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(viewModel.interviewerEmailInput.trimmingCharacters(in: .whitespaces).isEmpty)
-                }
-            }
-
-            ForEach(viewModel.assignedInterviewers, id: \.userId) { interviewer in
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(interviewer.fullName)
-                        Text(interviewer.emailAddress)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Button {
-                        viewModel.removeInterviewer(interviewer.userId)
-                    } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .foregroundStyle(.red)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        } header: {
-            Text("Interviewers")
-        } footer: {
-            Text("Add interviewers by email. They'll see this session in their \"My Interviews\" list.")
-        }
-    }
 }
