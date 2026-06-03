@@ -40,7 +40,7 @@ final class SessionDashboardViewModel {
     func confirmDelete() async {
         guard let session = sessionToDelete else { return }
         do {
-            try await service.deleteSession(sessionId: session.id)
+            try await service.deleteSession(sessionId: session.id, actorId: adminId)
             sessions.removeAll { $0.id == session.id }
         } catch {
             displayError("Failed to delete session: \(error.localizedDescription)")
