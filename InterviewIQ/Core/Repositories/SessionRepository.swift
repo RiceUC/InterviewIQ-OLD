@@ -53,7 +53,15 @@ final class SessionRepository {
 
     func updateSession(_ session: Session) async throws {
         let data = encodeSession(session)
-        try await db.child("sessions").child(session.id).setValue(data)
+        // updateChildValues writes only the specified top-level keys, leaving nested
+        // children (candidates, rubricQuestions, scoreRecords, candidateLocks) intact.
+        // setValue would replace the entire node and delete all nested data.
+        try await db.child("sessions").child(session.id).updateChildValues(data)
+    }
+
+    func fetchInterviewerIds(sessionId: String) async throws -> [String] {
+        let snapshot = try await db.child("sessions").child(sessionId).child("interviewerIds").getData()
+        return snapshot.value as? [String] ?? []
     }
 
     func deleteSession(sessionId: String) async throws {
