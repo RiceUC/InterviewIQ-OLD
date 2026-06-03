@@ -63,16 +63,21 @@ final class CandidateRankingService {
             )
         }
 
-        // 5. Sort: highest score first; tie-break by earliest submittedAt
-        ranked.sort {
+        // 5. Sort and assign rank numbers
+        return sortCandidates(ranked)
+    }
+
+    // Sorts candidates highest-score first (tie-break: earlier submittedAt wins)
+    // and assigns 1-indexed rank numbers.
+    func sortCandidates(_ candidates: [RankedCandidate]) -> [RankedCandidate] {
+        var sorted = candidates
+        sorted.sort {
             if $0.totalScore != $1.totalScore { return $0.totalScore > $1.totalScore }
             let lhs = $0.submittedAt ?? Date.distantFuture
             let rhs = $1.submittedAt ?? Date.distantFuture
             return lhs < rhs
         }
-
-        // 6. Assign rank numbers (1-indexed)
-        return ranked.enumerated().map { index, candidate in
+        return sorted.enumerated().map { index, candidate in
             RankedCandidate(
                 id: candidate.id,
                 name: candidate.name,
