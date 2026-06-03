@@ -9,17 +9,24 @@ class AuthViewModel: ObservableObject {
     @Published var emailAddress = ""
     @Published var userPassword = ""
     @Published var fullName = ""
-    
+    @Published var selectedRole: UserRole = .interviewer
+
     @Published var isLoading = false
     @Published var hasAuthenticationError = false
     @Published var errorMessage = ""
     @Published var isAccountLocked = false
     @Published var hasSuccessfullyRegistered = false
-    
+
     // MARK: - Core Security Storage (Per-Account Lock Tracking)
     // Key-Value data structures store values independently per normalized email string
     private var accountFailedAttempts: [String: Int] = [:]
     private var accountLockExpirations: [String: Date] = [:]
+
+    // MARK: - Profile Persistence
+    // Writes the user profile (name + role) to users/{uid} after sign-up so the
+    // app can route by role. Without this, registration created a Firebase Auth
+    // user but no profile record, leaving role/name unknown.
+    private let userRepository = UserRepository()
     
     // MARK: - Authentication Pipelines
     
@@ -140,8 +147,18 @@ class AuthViewModel: ObservableObject {
         
         // Isolate Rule Check 2: Server-side Database Duplicate Verification
         do {
-            _ = try await Auth.auth().createUser(withEmail: emailAddress, password: userPassword)
-            
+            let result = try await Auth.auth().createUser(withEmail: emailAddress, password: userPassword)
+
+            // Persist the profile so role + name survive beyond the Auth record.
+            let profile = UserProfile(
+                userId: result.user.uid,
+                fullName: fullName.trimmingCharacters(in: .whitespacesAndNewlines),
+                emailAddress: emailAddress.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                role: selectedRole,
+                isActive: true
+            )
+            try await userRepository.saveProfile(profile)
+
             // All registration rules passed flawlessly
             await MainActor.run {
                 self.isLoading = false
