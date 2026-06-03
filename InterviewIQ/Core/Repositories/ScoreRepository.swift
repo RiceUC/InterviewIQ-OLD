@@ -66,6 +66,25 @@ final class ScoreRepository {
         try await ref.updateChildValues(["syncStatus": SyncStatus.synced.rawValue])
     }
 
+    // True if any candidate in the session has a submitted score record.
+    // Used to protect a session from deletion once scoring has started (FR-04).
+    func hasSubmittedScores(sessionId: String) async throws -> Bool {
+        let snapshot = try await db
+            .child("sessions")
+            .child(sessionId)
+            .child("scoreRecords")
+            .getData()
+
+        guard let dict = snapshot.value as? [String: Any] else { return false }
+
+        return dict.values.contains { value in
+            guard let entry = value as? [String: Any] else { return false }
+            let status = entry["status"] as? String
+            let isImmutable = entry["isImmutable"] as? Bool ?? false
+            return status == "submitted" || isImmutable
+        }
+    }
+
     // MARK: - Private
 
     private func loadAllPendingLocal() -> [String: ScoreRecord] {
