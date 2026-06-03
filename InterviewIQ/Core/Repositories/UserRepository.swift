@@ -74,6 +74,18 @@ final class UserRepository {
         .sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
     }
 
+    // Looks up a single active interviewer by email for per-session assignment.
+    // Reads internally but returns only the one match, so the admin never sees a
+    // roster of every interviewer's email (privacy).
+    func findInterviewerByEmail(_ email: String) async throws -> UserProfile? {
+        let normalized = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalized.isEmpty else { return nil }
+        let all = try await fetchAllUsers()
+        return all.first {
+            $0.emailAddress.lowercased() == normalized && $0.role == .interviewer && $0.isActive
+        }
+    }
+
     // True when no account exists yet — used to bootstrap the very first user
     // as Admin (so roles aren't self-selected at registration).
     func hasAnyUsers() async throws -> Bool {

@@ -132,32 +132,40 @@ struct CreateEditSessionView: View {
 
     private var interviewersSection: some View {
         Section {
-            if viewModel.availableInterviewers.isEmpty {
-                Text("No interviewers have registered yet.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(viewModel.availableInterviewers, id: \.userId) { interviewer in
+            HStack {
+                TextField("Interviewer email", text: $viewModel.interviewerEmailInput)
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.emailAddress)
+                    .autocorrectionDisabled()
+                    .onSubmit { Task { await viewModel.addInterviewerByEmail() } }
+
+                if viewModel.isAddingInterviewer {
+                    ProgressView()
+                } else {
                     Button {
-                        viewModel.toggleInterviewer(interviewer.userId)
+                        Task { await viewModel.addInterviewerByEmail() }
                     } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(interviewer.fullName)
-                                    .foregroundStyle(.primary)
-                                Text(interviewer.emailAddress)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            if viewModel.selectedInterviewerIds.contains(interviewer.userId) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(Color.accentColor)
-                            } else {
-                                Image(systemName: "circle")
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
+                        Image(systemName: "plus.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.interviewerEmailInput.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            }
+
+            ForEach(viewModel.assignedInterviewers, id: \.userId) { interviewer in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(interviewer.fullName)
+                        Text(interviewer.emailAddress)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button {
+                        viewModel.removeInterviewer(interviewer.userId)
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .foregroundStyle(.red)
                     }
                     .buttonStyle(.plain)
                 }
@@ -165,7 +173,7 @@ struct CreateEditSessionView: View {
         } header: {
             Text("Interviewers")
         } footer: {
-            Text("Assigned interviewers see this session in their \"My Interviews\" list.")
+            Text("Add interviewers by email. They'll see this session in their \"My Interviews\" list.")
         }
     }
 }
