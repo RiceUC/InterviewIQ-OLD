@@ -9,15 +9,9 @@ struct SessionDashboardView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if viewModel.isLoading && viewModel.ownedSessions.isEmpty && viewModel.assignedSessions.isEmpty {
-                    ProgressView("Loading sessions…")
-                } else if viewModel.ownedSessions.isEmpty && viewModel.assignedSessions.isEmpty {
-                    emptyState
-                } else {
-                    sessionList
-                }
-            }
+            // List is always rendered so .refreshable is always attached.
+            // Loading and empty states are handled inside the list body.
+            sessionList
             .navigationTitle("Sessions")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -83,39 +77,43 @@ struct SessionDashboardView: View {
         .task { await viewModel.loadSessions() }
     }
 
-    // MARK: - Empty state
-
-    private var emptyState: some View {
-        ContentUnavailableView(
-            "No Sessions",
-            systemImage: "calendar.badge.plus",
-            description: Text("Tap + to create your first interview session, or wait to be assigned as a panelist.")
-        )
-    }
-
     // MARK: - Session list
 
     private var sessionList: some View {
         List {
-            if !viewModel.ownedSessions.isEmpty {
-                Section("My Sessions") {
-                    ForEach(viewModel.ownedSessions) { session in
-                        OwnedSessionRow(
-                            session: session,
-                            ownerId:      viewModel.userId,
-                            onEdit:       { viewModel.sessionToEdit    = session },
-                            onManageTeam: { viewModel.sessionForTeam   = session },
-                            onEditRubric: { viewModel.sessionForRubric = session },
-                            onDelete:     { viewModel.requestDelete(session) }
-                        )
+            // Loading spinner shown as a list row so the pull-to-refresh
+            // gesture is always available regardless of load state.
+            if viewModel.isLoading && viewModel.ownedSessions.isEmpty && viewModel.assignedSessions.isEmpty {
+                HStack { Spacer(); ProgressView("Loading sessions…"); Spacer() }
+                    .listRowBackground(Color.clear)
+            } else if viewModel.ownedSessions.isEmpty && viewModel.assignedSessions.isEmpty {
+                ContentUnavailableView(
+                    "No Sessions",
+                    systemImage: "calendar.badge.plus",
+                    description: Text("Tap + to create your first session, or wait to be assigned as a panelist.")
+                )
+                .listRowBackground(Color.clear)
+            } else {
+                if !viewModel.ownedSessions.isEmpty {
+                    Section("My Sessions") {
+                        ForEach(viewModel.ownedSessions) { session in
+                            OwnedSessionRow(
+                                session: session,
+                                ownerId:      viewModel.userId,
+                                onEdit:       { viewModel.sessionToEdit    = session },
+                                onManageTeam: { viewModel.sessionForTeam   = session },
+                                onEditRubric: { viewModel.sessionForRubric = session },
+                                onDelete:     { viewModel.requestDelete(session) }
+                            )
+                        }
                     }
                 }
-            }
 
-            if !viewModel.assignedSessions.isEmpty {
-                Section("Assigned to Me") {
-                    ForEach(viewModel.assignedSessions) { session in
-                        AssignedSessionRow(session: session, interviewerId: viewModel.userId)
+                if !viewModel.assignedSessions.isEmpty {
+                    Section("Assigned to Me") {
+                        ForEach(viewModel.assignedSessions) { session in
+                            AssignedSessionRow(session: session, interviewerId: viewModel.userId)
+                        }
                     }
                 }
             }
@@ -211,16 +209,18 @@ private struct OwnedSessionRow: View {
 
 // MARK: - Assigned session row
 
-// Panelist view: primary tap → rating screen, chart button → dashboard.
+// Panelist view: tap card body → candidate list → rating.
+// Chart button → dashboard. No NavigationLink used so no chevron arrows appear.
 private struct AssignedSessionRow: View {
     let session: Session
     let interviewerId: String
 
+    @State private var goToRating    = false
+    @State private var goToDashboard = false
+
     var body: some View {
         HStack(spacing: 12) {
-            NavigationLink {
-                LiveRatingScreen(sessionId: session.id, interviewerId: interviewerId)
-            } label: {
+            Button { goToRating = true } label: {
                 HStack(spacing: 12) {
                     RoundedRectangle(cornerRadius: 10)
                         .fill(Color.green.opacity(0.12))
@@ -232,28 +232,34 @@ private struct AssignedSessionRow: View {
                         }
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(session.title).font(.headline)
+                        Text(session.title)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
                         Text(session.date, style: .date)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+
+                    Spacer(minLength: 0)
                 }
             }
-            .foregroundStyle(.primary)
+            .buttonStyle(.plain)
 
-            Spacer(minLength: 0)
-
-            NavigationLink {
-                DashboardComparisonView(sessionId: session.id, sessionTitle: session.title)
-            } label: {
+            Button { goToDashboard = true } label: {
                 Image(systemName: "chart.bar.fill")
                     .foregroundStyle(Color.brandPurple)
                     .padding(8)
                     .background(Color.brandPurple.opacity(0.1))
                     .clipShape(Circle())
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 4)
+        .navigationDestination(isPresented: $goToRating) {
+            LiveRatingScreen(sessionId: session.id, interviewerId: interviewerId)
+        }
+        .navigationDestination(isPresented: $goToDashboard) {
+            DashboardComparisonView(sessionId: session.id, sessionTitle: session.title)
+        }
     }
 }

@@ -22,7 +22,6 @@ struct ProfileView: View {
                     } else if let profile {
                         LabeledContent("Name", value: profile.fullName)
                         LabeledContent("Email", value: profile.emailAddress)
-                        LabeledContent("Role", value: profile.role.displayName)
                     } else {
                         Text("Couldn't load your profile.")
                             .foregroundStyle(.secondary)
