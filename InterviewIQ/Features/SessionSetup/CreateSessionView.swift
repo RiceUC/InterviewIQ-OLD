@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SessionDashboardView: View {
     @Bindable var viewModel: SessionDashboardViewModel
+    @State private var showingProfile = false
 
     var body: some View {
         NavigationStack {
@@ -37,6 +38,16 @@ struct SessionDashboardView: View {
                         Image(systemName: "plus")
                     }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingProfile = true
+                    } label: {
+                        Image(systemName: "person.crop.circle")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingProfile) {
+                ProfileView(userId: viewModel.adminId)
             }
             .sheet(isPresented: $viewModel.showCreateSheet) {
                 CreateEditSessionView(
