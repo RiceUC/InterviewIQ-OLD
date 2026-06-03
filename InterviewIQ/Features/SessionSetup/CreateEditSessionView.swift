@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CreateEditSessionView: View {
-    @Bindable var viewModel: CreateEditSessionViewModel
+    @Bindable var viewModel: CreateEditSessionVM
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {

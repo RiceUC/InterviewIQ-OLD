@@ -6,7 +6,7 @@ import SwiftUI
 // Admin-only user management (FR-10): list users, change roles, activate/
 // deactivate. Maps to UserManagementVM (C-32). Role/active mutations are audited.
 @Observable
-final class UserManagementViewModel {
+final class UserManagementVM {
     let adminId: String
 
     var users: [UserProfile] = []
@@ -88,7 +88,7 @@ final class UserManagementViewModel {
 // MARK: - View
 
 struct UserManagementView: View {
-    @State var viewModel: UserManagementViewModel
+    @State var viewModel: UserManagementVM
 
     var body: some View {
         ZStack {

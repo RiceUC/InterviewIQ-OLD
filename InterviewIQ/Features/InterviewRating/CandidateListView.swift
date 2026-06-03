@@ -3,7 +3,7 @@ import SwiftUI
 // Shows the interviewer's list of candidates for a session.
 // Tapping "Start Interview" acquires a candidate lock and enters the rating phase.
 struct CandidateListView: View {
-    @Bindable var viewModel: InterviewRatingViewModel
+    @Bindable var viewModel: LiveRatingVM
 
     var body: some View {
         ZStack {

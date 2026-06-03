@@ -22,7 +22,7 @@ struct RubricQuestionEntry: Identifiable {
 }
 
 @Observable
-final class CreateEditSessionViewModel {
+final class CreateEditSessionVM {
     let adminId: String
     let existingSession: Session?
 

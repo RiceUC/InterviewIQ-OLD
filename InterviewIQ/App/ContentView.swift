@@ -97,7 +97,7 @@ struct ContentView: View {
         switch profile.role {
         case .admin:
             SessionDashboardView(
-                viewModel: SessionDashboardViewModel(adminId: profile.userId)
+                viewModel: SessionDashboardVM(adminId: profile.userId)
             )
         case .interviewer:
             InterviewerHomeView(

@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-// DashboardView (C-09): UC-05 read-only ranked candidate dashboard for Admin.
-// Triggered from the SessionDashboard when an Admin taps "View Dashboard" on a session row.
-struct DashboardView: View {
+// DashboardComparisonView (C-09): UC-05 read-only ranked candidate dashboard.
+// Triggered from the SessionDashboard when a user taps "View Dashboard" on a session row.
+struct DashboardComparisonView: View {
     let sessionId: String
     let sessionTitle: String
 
-    @State private var viewModel = DashboardViewModel()
+    @State private var viewModel = DashboardComparisonVM()
 
     // Export state
     @State private var exportedURL: URL?

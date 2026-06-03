@@ -1,7 +1,7 @@
 import Foundation
 
 @Observable
-final class SessionDashboardViewModel {
+final class SessionDashboardVM {
     let adminId: String
 
     var sessions: [Session] = []

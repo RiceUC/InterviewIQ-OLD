@@ -69,12 +69,12 @@ struct InterviewerHomeView: View {
             .navigationDestination(for: InterviewerRoute.self) { route in
                 switch route {
                 case .rate(let session):
-                    InterviewRatingView(
+                    LiveRatingScreen(
                         sessionId: session.id,
                         interviewerId: viewModel.interviewerId
                     )
                 case .dashboard(let session):
-                    DashboardView(sessionId: session.id, sessionTitle: session.title)
+                    DashboardComparisonView(sessionId: session.id, sessionTitle: session.title)
                 }
             }
             .alert("Error", isPresented: $viewModel.showError) {

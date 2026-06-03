@@ -11,7 +11,7 @@ import Foundation
 // Fetches ranked candidates from CandidateRankingService and exposes
 // export helpers consumed by the export sheet.
 @Observable
-final class DashboardViewModel {
+final class DashboardComparisonVM {
 
     // MARK: - Input (set by parent before task runs)
     var sessionId: String = ""

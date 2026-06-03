@@ -3,7 +3,7 @@ import Foundation
 // LiveRatingVM (C-13): coordinates candidate locking, question-by-question
 // scoring, offline persistence, and final submission for UC-04.
 @Observable
-final class InterviewRatingViewModel {
+final class LiveRatingVM {
 
     // MARK: - Session context (set by the parent view)
     var sessionId: String = ""

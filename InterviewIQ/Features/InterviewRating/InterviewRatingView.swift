@@ -1,11 +1,11 @@
 import SwiftUI
 
 // Root view for UC-04. Routes between the candidate list and the active rating form.
-struct InterviewRatingView: View {
+struct LiveRatingScreen: View {
     let sessionId: String
     let interviewerId: String
 
-    @State private var viewModel = InterviewRatingViewModel()
+    @State private var viewModel = LiveRatingVM()
 
     var body: some View {
         // No NavigationStack here: this view is always pushed inside the

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SessionDashboardView: View {
-    @Bindable var viewModel: SessionDashboardViewModel
+    @Bindable var viewModel: SessionDashboardVM
     @State private var showingProfile = false
 
     var body: some View {
@@ -25,7 +25,7 @@ struct SessionDashboardView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink {
                         UserManagementView(
-                            viewModel: UserManagementViewModel(adminId: viewModel.adminId)
+                            viewModel: UserManagementVM(adminId: viewModel.adminId)
                         )
                     } label: {
                         Image(systemName: "person.2.badge.gearshape")
@@ -51,7 +51,7 @@ struct SessionDashboardView: View {
             }
             .sheet(isPresented: $viewModel.showCreateSheet) {
                 CreateEditSessionView(
-                    viewModel: CreateEditSessionViewModel(adminId: viewModel.adminId)
+                    viewModel: CreateEditSessionVM(adminId: viewModel.adminId)
                 )
                 .onDisappear {
                     Task { await viewModel.loadSessions() }
@@ -59,7 +59,7 @@ struct SessionDashboardView: View {
             }
             .sheet(item: $viewModel.sessionToEdit) { session in
                 CreateEditSessionView(
-                    viewModel: CreateEditSessionViewModel(
+                    viewModel: CreateEditSessionVM(
                         adminId: viewModel.adminId,
                         existingSession: session
                     )
@@ -127,7 +127,7 @@ private struct SessionRowView: View {
  
     var body: some View {
         NavigationLink {
-            DashboardView(sessionId: session.id, sessionTitle: session.title)
+            DashboardComparisonView(sessionId: session.id, sessionTitle: session.title)
         } label: {
             HStack(spacing: 12) {
                 RoundedRectangle(cornerRadius: 10)
