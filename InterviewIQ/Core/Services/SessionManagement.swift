@@ -6,14 +6,16 @@ enum SessionValidationError: LocalizedError {
     case noCandidates
     case noQuestions
     case invalidMaxScore
+    case hasSubmittedScores
 
     var errorDescription: String? {
         switch self {
-        case .emptyTitle:      return "Session title cannot be empty."
-        case .dateInPast:      return "Session date must be today or in the future."
-        case .noCandidates:    return "Add at least one candidate before saving."
-        case .noQuestions:     return "Add at least one rubric question before saving."
-        case .invalidMaxScore: return "Each question's max score must be at least 1."
+        case .emptyTitle:         return "Session title cannot be empty."
+        case .dateInPast:         return "Session date must be today or in the future."
+        case .noCandidates:       return "Add at least one candidate before saving."
+        case .noQuestions:        return "Add at least one rubric question before saving."
+        case .invalidMaxScore:    return "Each question's max score must be at least 1."
+        case .hasSubmittedScores: return "This session has submitted scores and cannot be deleted."
         }
     }
 }
@@ -21,15 +23,18 @@ enum SessionValidationError: LocalizedError {
 final class SessionManagementService {
     private let repo: SessionRepository
     private let rubricRepo: RubricRepository
+    private let scoreRepo: ScoreRepository
     private let auditLogger: AuditLogger
 
     init(
         repo: SessionRepository = SessionRepository(),
         rubricRepo: RubricRepository = RubricRepository(),
+        scoreRepo: ScoreRepository = ScoreRepository(),
         auditLogger: AuditLogger = AuditLogger()
     ) {
         self.repo = repo
         self.rubricRepo = rubricRepo
+        self.scoreRepo = scoreRepo
         self.auditLogger = auditLogger
     }
 
@@ -153,6 +158,12 @@ final class SessionManagementService {
     }
 
     func deleteSession(sessionId: String, actorId: String) async throws {
+        // A session whose candidates already have submitted scores is an
+        // evaluation record of record and must not be deleted (FR-04 / UC-02).
+        if try await scoreRepo.hasSubmittedScores(sessionId: sessionId) {
+            throw SessionValidationError.hasSubmittedScores
+        }
+
         try await repo.deleteSession(sessionId: sessionId)
 
         await auditLogger.log(
