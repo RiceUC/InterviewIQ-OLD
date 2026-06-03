@@ -21,6 +21,15 @@ struct SessionDashboardView: View {
             .navigationTitle("Sessions")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        UserManagementView(
+                            viewModel: UserManagementViewModel(adminId: viewModel.adminId)
+                        )
+                    } label: {
+                        Image(systemName: "person.2.badge.gearshape")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         viewModel.showCreateSheet = true

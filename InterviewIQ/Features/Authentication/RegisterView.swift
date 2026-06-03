@@ -100,32 +100,6 @@ struct RegisterView: View {
                         )
                     }
                     
-                    // 4b. Role Selection Component (RBAC)
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Role")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.primary)
-
-                        HStack(spacing: 12) {
-                            Image(systemName: "person.badge.shield.checkmark")
-                                .foregroundColor(.brandGrey)
-
-                            Picker("Role", selection: $viewModel.selectedRole) {
-                                ForEach(UserRole.allCases) { role in
-                                    Text(role.displayName).tag(role)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                        }
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.brandGrey.opacity(0.4), lineWidth: 1)
-                        )
-                    }
-
                     // 5. Communication Email Address Component
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Email")

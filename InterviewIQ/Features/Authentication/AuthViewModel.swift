@@ -9,7 +9,6 @@ class AuthViewModel: ObservableObject {
     @Published var emailAddress = ""
     @Published var userPassword = ""
     @Published var fullName = ""
-    @Published var selectedRole: UserRole = .interviewer
 
     @Published var isLoading = false
     @Published var hasAuthenticationError = false
@@ -167,6 +166,13 @@ class AuthViewModel: ObservableObject {
         
         // Isolate Rule Check 2: Server-side Database Duplicate Verification
         do {
+            // Role is NOT self-selected (FR-10): the first account to ever register
+            // bootstraps as Admin; everyone after is an Interviewer until an Admin
+            // promotes them. On a failed lookup we default to the least-privileged
+            // role so a glitch can never silently grant Admin.
+            let alreadyHasUsers = (try? await userRepository.hasAnyUsers()) ?? true
+            let assignedRole: UserRole = alreadyHasUsers ? .interviewer : .admin
+
             let result = try await Auth.auth().createUser(withEmail: emailAddress, password: userPassword)
 
             // Persist the profile so role + name survive beyond the Auth record.
@@ -174,7 +180,7 @@ class AuthViewModel: ObservableObject {
                 userId: result.user.uid,
                 fullName: fullName.trimmingCharacters(in: .whitespacesAndNewlines),
                 emailAddress: emailAddress.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-                role: selectedRole,
+                role: assignedRole,
                 isActive: true
             )
             try await userRepository.saveProfile(profile)

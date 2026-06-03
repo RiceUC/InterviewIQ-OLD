@@ -9,6 +9,9 @@ enum AuditAction: String, Codable {
     case sessionCreated
     case sessionUpdated
     case sessionDeleted
+    case roleChanged
+    case userActivated
+    case userDeactivated
 }
 
 // Immutable record of an administrative or authentication event (FR-11).
