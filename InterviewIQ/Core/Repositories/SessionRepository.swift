@@ -19,7 +19,7 @@ final class SessionRepository {
             else { return nil }
 
             let date = Date(timeIntervalSince1970: dateTimestamp)
-            let interviewerIds = entry["interviewerIds"] as? [String] ?? []
+            let interviewerIds = parseInterviewerIds(entry["interviewerIds"])
             return Session(id: id, title: title, date: date, adminId: entryAdminId, interviewerIds: interviewerIds)
         }
     }
@@ -36,10 +36,11 @@ final class SessionRepository {
                   let id = entry["id"] as? String,
                   let title = entry["title"] as? String,
                   let dateTimestamp = entry["date"] as? TimeInterval,
-                  let entryAdminId = entry["adminId"] as? String,
-                  let interviewerIds = entry["interviewerIds"] as? [String],
-                  interviewerIds.contains(interviewerId)
+                  let entryAdminId = entry["adminId"] as? String
             else { return nil }
+
+            let interviewerIds = parseInterviewerIds(entry["interviewerIds"])
+            guard interviewerIds.contains(interviewerId) else { return nil }
 
             let date = Date(timeIntervalSince1970: dateTimestamp)
             return Session(id: id, title: title, date: date, adminId: entryAdminId, interviewerIds: interviewerIds)
@@ -52,16 +53,22 @@ final class SessionRepository {
     }
 
     func updateSession(_ session: Session) async throws {
-        let data = encodeSession(session)
-        // updateChildValues writes only the specified top-level keys, leaving nested
-        // children (candidates, rubricQuestions, scoreRecords, candidateLocks) intact.
-        // setValue would replace the entire node and delete all nested data.
+        // Re-read interviewerIds from Firebase and include them explicitly in the update.
+        // updateChildValues on the session node causes Firebase RTDB to re-normalize any
+        // array siblings (interviewerIds) from NSArray to an integer-keyed NSDictionary,
+        // which breaks the subsequent `as? [String]` cast in fetchSessions. Writing the
+        // ids back as part of this same call prevents the reformat.
+        var data = encodeSession(session)
+        let freshIds = try await fetchInterviewerIds(sessionId: session.id)
+        if !freshIds.isEmpty {
+            data["interviewerIds"] = freshIds
+        }
         try await db.child("sessions").child(session.id).updateChildValues(data)
     }
 
     func fetchInterviewerIds(sessionId: String) async throws -> [String] {
         let snapshot = try await db.child("sessions").child(sessionId).child("interviewerIds").getData()
-        return snapshot.value as? [String] ?? []
+        return parseInterviewerIds(snapshot.value)
     }
 
     // Writes ONLY the interviewerIds child — never touches candidates, rubricQuestions,
@@ -100,6 +107,20 @@ final class SessionRepository {
     }
 
     // MARK: - Private
+
+    // Firebase RTDB stores Swift arrays as sequential integer-keyed objects internally.
+    // After a sibling updateChildValues call the SDK may return the node as NSDictionary
+    // {"0": "uid1"} rather than NSArray, breaking a plain `as? [String]` cast. This
+    // helper handles both representations.
+    private func parseInterviewerIds(_ raw: Any?) -> [String] {
+        if let arr = raw as? [String] { return arr }
+        if let dict = raw as? [String: Any] {
+            return dict
+                .sorted { (Int($0.key) ?? 0) < (Int($1.key) ?? 0) }
+                .compactMap { $0.value as? String }
+        }
+        return []
+    }
 
     private func encodeSession(_ session: Session) -> [String: Any] {
         return [
