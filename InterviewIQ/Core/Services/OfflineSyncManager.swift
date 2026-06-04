@@ -44,7 +44,7 @@ final class OfflineSyncManager {
             var synced = record
             synced.syncStatus = .synced
             try await scoreRepo.submit(synced)
-            scoreRepo.removeLocalRecord(candidateId: record.candidateId)
+            scoreRepo.saveLocally(synced)
         } catch {
             // Stays queued in UserDefaults; will retry on next connectivity event.
         }

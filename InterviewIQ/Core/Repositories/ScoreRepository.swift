@@ -20,7 +20,7 @@ final class ScoreRepository {
     }
 
     func loadAllPending() -> [ScoreRecord] {
-        Array(loadAllPendingLocal().values)
+        Array(loadAllPendingLocal().values).filter { $0.syncStatus == .pending }
     }
 
     func removeLocalRecord(candidateId: String) {
