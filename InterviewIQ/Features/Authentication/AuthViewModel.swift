@@ -17,14 +17,10 @@ class AuthViewModel: ObservableObject {
     @Published var hasSuccessfullyRegistered = false
 
     // MARK: - Core Security Storage (Per-Account Lock Tracking)
-    // Key-Value data structures store values independently per normalized email string
     private var accountFailedAttempts: [String: Int] = [:]
     private var accountLockExpirations: [String: Date] = [:]
 
     // MARK: - Profile Persistence
-    // Writes the user profile (name + role) to users/{uid} after sign-up so the
-    // app can route by role. Without this, registration created a Firebase Auth
-    // user but no profile record, leaving role/name unknown.
     private let userRepository = UserRepository()
 
     // MARK: - Audit Logging (FR-11)
@@ -83,7 +79,6 @@ class AuthViewModel: ObservableObject {
             
             await MainActor.run {
                 self.isLoading = false
-                // Success actions (e.g., transition application dashboard root state)
             }
             
         } catch {
@@ -164,12 +159,8 @@ class AuthViewModel: ObservableObject {
             return
         }
         
-        // Isolate Rule Check 2: Server-side Database Duplicate Verification
+        // Server-side Database Duplicate Verification
         do {
-            // Role is NOT self-selected (FR-10): the first account to ever register
-            // bootstraps as Admin; everyone after is an Interviewer until an Admin
-            // promotes them. On a failed lookup we default to the least-privileged
-            // role so a glitch can never silently grant Admin.
             let alreadyHasUsers = (try? await userRepository.hasAnyUsers()) ?? true
             let assignedRole: UserRole = alreadyHasUsers ? .interviewer : .admin
 
@@ -194,7 +185,6 @@ class AuthViewModel: ObservableObject {
                 details: profile.emailAddress
             )
 
-            // All registration rules passed flawlessly
             await MainActor.run {
                 self.isLoading = false
                 self.hasSuccessfullyRegistered = true
